@@ -296,7 +296,10 @@ category row) doesn't match `docs/data/summary-en.json`.
 - **The neighbourhood is finite.** First-letter typos and two-edit typos are
   never tried, so a listed word might still come back from one of those.
 - **One machine, one version.** This census is macOS 26.5.1 (25F80), the
-  version on the machine that ran it; macOS 27 was not tested. iOS's
+  version on the machine that ran it; macOS 27 was not tested. The CI
+  runner, on macOS 26.7.2 (25G332), gives the same verdicts for the four
+  words it probes (*suicide* and *Hitler* suppressed, *lesbian* and *Stalin*
+  suggested). iOS's
   `UITextChecker` likely shares the engine but was not tested either.
 - **Repeatability.** A rerun of 400 words (200 from each side of pass 1) with
   the same typos gave identical verdicts (400 of 400). Guess lists are not
