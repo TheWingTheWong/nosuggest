@@ -313,6 +313,13 @@ category row) doesn't match `docs/data/summary-en.json`.
   on the full guess list).
 - `data/26.5.1/verify-en.jsonl.gz`: pass 2, every flagged word with its whole neighbourhood, same format.
 - `data/26.5.1/stability-en.txt`: the 400-word rerun.
+
+The census was produced by `scripts/run-census.sh`. After it ran, the
+related-form rule was tightened (see the commit log). The new rule is strictly
+narrower, so it can only change the verdict of a word that was labelled
+"related" or that autocorrect produces; those 266 words were re-probed with the
+new code and merged in. Every other verdict is what a full rerun gives, because
+the checker is deterministic.
 - `data/26.5.1/control-en.jsonl`: the control sample.
 - `data/26.5.1/audit-*.tsv`: the hand labels.
 - `data/26.5.1/summary-en.md`: every number in this README.
