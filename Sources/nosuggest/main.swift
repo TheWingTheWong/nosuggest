@@ -16,7 +16,8 @@ USAGE
   nosuggest report [--data <dir>] [--out <dir>]
                                            summarise a census for the web explorer
   nosuggest concepts [--file data/concepts.tsv]
-                                           same concepts probed across languages, as JSON
+                                           same concepts, every keyboard-plausible typo,
+                                           across languages, as JSON
   nosuggest guesses <typo=word>...         raw guesses for typos, as JSON
   nosuggest env                            print OS, checker and user-dictionary details
 
@@ -216,6 +217,7 @@ case "concepts":
     var p = policy
     p.earlyExit = false
     p.minLength = 3
+    p.fullNeighbourhood = true   // every keyboard-plausible typo, as in stage 2
     var probers: [String: Prober] = [:]
     var rows: [[String: Any]] = []
     for line in lines.dropFirst() where line.count == header.count {
@@ -236,6 +238,9 @@ case "concepts":
 
 case "report":
     Report.run(opts)
+
+case "check-readme":
+    ReadmeCheck.run(opts)
 
 case "env":
     let pi = ProcessInfo.processInfo

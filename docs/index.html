@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Words your Mac won't suggest</title>
 <meta name="description" content="A black-box census of the words the macOS spell checker accepts as correctly spelled but never offers as a correction.">
+<meta property="og:title" content="Words your Mac won't suggest">
+<meta property="og:description" content="The macOS spell checker accepts these words as correctly spelled but never offers them as a correction.">
+<meta property="og:image" content="https://thewingthewong.github.io/nosuggest/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
@@ -28,7 +32,7 @@
 
   <section>
     <h2>Same idea, seven languages</h2>
-    <p>Each language has its own list. The same 25 concepts, translated and run through eight typos each in every language the Mac checks. A red word is accepted but never suggested; a plain one comes back.</p>
+    <p>Each language has its own list. The same 25 concepts, translated into seven of the roughly forty languages the Mac checks, and run through every keyboard-plausible typo. A red word is accepted but never suggested; a plain one comes back.</p>
     <div class="table-wrap matrix-wrap">
       <table class="matrix" id="matrix"></table>
     </div>
@@ -37,7 +41,7 @@
 
   <section>
     <h2>The English list</h2>
-    <p>Every word in this list passed the spell check when typed correctly, and came back from none of six to eight one-letter typos. Words where the checker offered a different form of the same word instead (<em>Boston's</em> for <em>Bostns</em>) are not counted. The categories are editorial, assigned by hand-written rules in <a href="https://github.com/TheWingTheWong/nosuggest/blob/main/data/categories.tsv"><code>data/categories.tsv</code></a>.</p>
+    <p id="list-text"></p>
     <div class="controls">
       <label class="search">
         <span class="visually-hidden">Search the list</span>
@@ -63,7 +67,7 @@
       <div id="histogram"></div>
       <figcaption id="hist-caption"></figcaption>
     </figure>
-    <p id="fp-text"></p>
+    <div id="fp-text" class="prose"></div>
   </section>
 
   <section>
@@ -78,7 +82,7 @@
     <pre class="cmd"><code>git clone https://github.com/TheWingTheWong/nosuggest
 cd nosuggest
 swift run -c release nosuggest word suicide lesbian
-./scripts/run-census.sh   # about 30 minutes</code></pre>
+./scripts/run-census.sh   # about 45 minutes</code></pre>
     <p>Source, raw data and method: <a href="https://github.com/TheWingTheWong/nosuggest">github.com/TheWingTheWong/nosuggest</a>.</p>
   </section>
 

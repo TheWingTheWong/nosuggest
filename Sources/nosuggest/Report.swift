@@ -28,6 +28,7 @@ enum Report {
     }
 
     struct Summary: Codable {
+        // Decoded again by `check-readme`.
         let os: String
         let language: String
         let generated: String
@@ -38,6 +39,8 @@ enum Report {
         /// Its `suppressed` count is the published list.
         let final: CensusSummary
         let verifyTypos: Int
+        /// Typos tried in stage 1.
+        let probeTypos: Int
         /// Words stage 1 flagged that stage 2 cleared: [word, typo that brought it back].
         let cleared: [[String]]
         /// Control for lowercase words and for capitalised words (names,
@@ -181,6 +184,7 @@ enum Report {
         let iso = ISO8601DateFormatter().string(from: Date())
         let summary = Summary(os: os, language: lang, generated: iso, lexiconWords: results.count,
                               census: census, final: final, verifyTypos: verify.reduce(0) { $0 + $1.trials.count },
+                              probeTypos: results.reduce(0) { $0 + $1.trials.count },
                               cleared: cleared, control: ctl, controlCapitalised: ctlCap,
                               auditControlZeros: audit("control-zeros"), auditSample: audit("sample"), auditBaseRate: audit("base-rate"), decided: decided,
                               suppressedLowercase: supAll.filter { !isCap($0.word) }.count,
@@ -258,5 +262,51 @@ enum Report {
         print("Final-list words that occur in some iOS entry: \(cmp.suppressedInIOSPhrase); not in any: \(cmp.suppressedNotInIOS)")
         print("Hunspell NOSUGGEST stems and their macOS verdicts:")
         for (w, v) in cmp.hunspellNoSuggest.sorted(by: { $0.key < $1.key }) { print("  \(w): \(v)") }
+    }
+}
+
+/// `nosuggest check-readme`: every headline number in README.md must match
+/// the published summary, so the prose can't drift from the data.
+enum ReadmeCheck {
+    static func grouped(_ n: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = Locale(identifier: "en_US")
+        return f.string(from: NSNumber(value: n)) ?? String(n)
+    }
+
+    static func run(_ opts: Options) {
+        let summaryPath = opts.string("summary", "docs/data/summary-en.json")
+        let readmePath = opts.string("readme", "README.md")
+        guard let data = FileManager.default.contents(atPath: summaryPath),
+              let s = try? JSONDecoder().decode(Report.Summary.self, from: data),
+              let readme = try? String(contentsOfFile: readmePath, encoding: .utf8)
+        else { fail("check-readme: cannot read \(summaryPath) or \(readmePath)") }
+
+        var expected: [(String, String)] = [
+            ("final list", grouped(s.final.suppressed)),
+            ("words tested", grouped(s.census.tested)),
+            ("stage 1 flagged", grouped(s.census.suppressed)),
+            ("stage 2 typos", grouped(s.verifyTypos)),
+            ("stage 1 typos", grouped(s.probeTypos)),
+            ("cleared in stage 2", grouped(s.cleared.count)),
+            ("suggested", grouped(s.census.counts["suggested"] ?? 0)),
+            ("rejected", grouped(s.census.counts["rejected"] ?? 0)),
+            ("not in any iOS entry", grouped(s.comparison.suppressedNotInIOS)),
+            ("iOS entries", grouped(s.comparison.iosPhrases)),
+            ("missing from completions", grouped(s.final.suppressedAlsoMissingFromCompletions)),
+            ("control words", grouped(s.control.wordsTested)),
+            ("empty guess lists", Report.pct(s.final.suppressedEmptyListShare)),
+        ]
+        if let a = s.auditSample {
+            expected.append(("audit none rate", Report.pct(a.noneRate)))
+        }
+        var missing = 0
+        for (label, value) in expected {
+            let ok = readme.contains(value)
+            if !ok { missing += 1 }
+            print("\(ok ? "ok     " : "MISSING") \(label): \(value)")
+        }
+        if missing > 0 { fail("check-readme: \(missing) number(s) in the summary do not appear in \(readmePath)") }
     }
 }

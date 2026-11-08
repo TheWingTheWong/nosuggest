@@ -1,10 +1,13 @@
-# Hand labels for the control words that missed all eight typos. One judgement per word, by the author:
-#   topical    an obvious sensitive reason (sex, violence, drugs, slurs, religion, death, ...)
+# Hand labels for the control words that pass 1 flagged (scripts/audit-sample.sh control-zeros). One judgement per word, by the author, made
+# knowing which sample the word came from:
+#   topical    an obvious sensitive reason (sex, violence, drugs, slurs, religion,
+#              death, medicine, ethnicity, politics, ...)
 #   lookalike  no reason on its own, but spelled like a word that has one
 #   none       no apparent reason
-# Disagree? Edit the label and rerun `nosuggest report`.
+# Disagree? Edit the label and rerun `nosuggest report` (scripts/build-site.sh).
 Australoid	topical	
 Islam	topical	
+Moro	topical	
 abortions	topical	
 belch	topical	
 belched	topical	
@@ -19,6 +22,7 @@ diddling	topical
 drunk	topical	
 fornicating	topical	
 fyke	lookalike	looks like "fuck"
+gagged	topical	
 gringo	topical	
 gypper	topical	
 gyppers	topical	

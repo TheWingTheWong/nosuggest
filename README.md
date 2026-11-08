@@ -2,17 +2,18 @@
 
 [![Launch video](assets/launch.png)](assets/launch.mp4)
 
-**The macOS spell checker accepts 1,705 English words as correctly spelled
-but never offers them as a correction.** Type *suicde* and it has no
-suggestions at all, though it knows *suicide*. *Aborion*, *murdr*, *Isalm*,
-*gospl* and *Hiter* get the same treatment, while *lesbain*, *euthanasa*,
-*Chrstian* and *Stlin* come back right away. nosuggest finds these words from
-the outside: it sent 123,537 one-letter typos of 108,931 accepted words to the
-real `NSSpellChecker` (the one behind TextEdit, Mail, Notes, Pages and Safari
-text fields) and recorded which words never come back. Ordinary words come
-back from 99.3% to 99.8% of their typos; these never do. A seeded audit of
-200 of them found an obvious sensitive meaning for 92% and no apparent reason
-for 3.5%.
+**The macOS spell checker accepts 1,601 English words as correctly
+spelled but will not offer them as a correction from any keyboard-plausible
+typo.** Type *suicde* and it has no suggestions at all, though it knows
+*suicide*. *Aborion*, *murdr*, *Isalm*, *gospl* and *Hiter* get the same
+treatment, while *lesbain*, *euthanasa*, *Chrstian* and *Stlin* come back right
+away. nosuggest finds these words from the outside, through the public
+`NSSpellChecker` API that TextEdit, Mail, Notes, Pages and Safari text fields
+use. It tried eight typos on each of 108,930 accepted words, then every
+keyboard-plausible typo (about 90 per word) on the 1,748 that never
+came back, and kept only the words that still never came back. In a hand audit
+of 200 of them, 96% have an obvious sensitive meaning; in the same audit of
+200 words the checker *does* suggest, 13% do.
 
 **Live explorer: https://thewingthewong.github.io/nosuggest/**
 
@@ -23,76 +24,97 @@ keyboard won't predict, which Derik Kauffman recovered from iOS
 ([Swipeblocked](https://swipeblocked.com)). That list is made of two- to
 six-word phrases and only affects predictions and swipe typing. The spell
 checker's list is a separate mechanism: it works on single words, it covers
-medicine, religion, crime and history as well as profanity, and 1,635 of the
-1,705 words here don't appear in any of the 4,513 iOS entries at all.
+medicine, religion, crime and history as well as profanity, and
+1,541 of the 1,601 words here don't appear in any of the
+4,513 iOS entries at all.
 
 ## Results (macOS 26.5.1, build 25F80, English)
 
-| verdict | words | meaning |
-|---|---:|---|
-| suggested | 107,031 | came back from at least one typo |
-| suppressed | 1,705 | accepted, never came back from 6 to 8 typos |
-| related | 187 | only another form came back (*Bostns* gives *Boston's*) |
-| borderline | 8 | never came back, but fewer than 6 genuine typos to test |
-| rejected | 19,718 | the checker flags the word itself as misspelled |
-| untestable | 131 | internal capitals (*BigQuery*) or no genuine typos to try |
+Two passes over SCOWL's 128,780 most common English words (size 70 and
+below):
 
-Of the 1,705 suppressed words:
+| | words | typos tried |
+|---|---:|---:|
+| tested (the checker accepts the word) | 108,930 | 123,703 |
+| flagged by pass 1 (0 of 6-8 typos came back) | 1,748 | |
+| cleared by pass 2 (some typo brought the word, or another form of it, back) | 147 | 157,971 |
+| **final list** | **1,601** | |
 
-- **52.9%** of their typos got an empty guess list, not merely a list
+Also in pass 1: 107,031 words came back, 144 came back only as
+another form (*Bostns* gives *Boston's*), 19,719 SCOWL words are flagged as
+misspelled by the checker itself and 131 were untestable (internal capitals
+like *BigQuery*).
+
+Pass 2 matters. It cleared most of the first names and odd words that pass 1
+flagged (*Hallie*, *Kathrine*, *Balkan*, *moshes*), the lookalikes
+(*analeptics*, *colones*), and a handful of sensitive words that come back from
+exactly one common misspelling: *terrorsm* gives *terrorism*, *Zionsm* gives
+*Zionism*, *killr* gives *killer*. Those are not on the list; this README only
+calls a word suppressed if no keyboard-plausible typo returns it.
+
+Of the 1,601 words on the final list:
+
+- **72.6%** of their typos got an empty guess list, not merely a list
   without the word. Asked about *suicde*, *aborion*, *murdr* or *Isalm*, the
   checker says "No Guesses Found".
-- **1,699** are also missing from completions of their own prefix, and
-  **1,697** are never produced by autocorrect. Same list, all three channels.
-- **1,417** missed on at least two *unambiguous* typos: typos whose only
-  neighbour within one edit, in a 665,000-word list, is the word itself.
-- **1,590** are lowercase words; 115 are capitalised (Hitler, Auschwitz,
-  Islam, Gospel, Satan, Shiite, Viagra...).
+- **1,601** are also missing from completions of their own prefix, and
+  **1,600** are never produced by autocorrect.
+- **1,582** missed on two or more typos that have no other SCOWL word
+  within one edit.
+- 1,497 are lowercase; 104 are capitalised (*Hitler*, *Auschwitz*, *Islam*, *Satan*, *Shiite*, *Viagra*).
+- Rarity doesn't explain it. The suppression rate is 0.80% among SCOWL's
+  rarest tier (size 70), against 1.58% at size 35 and 4.66% at size 40.
 
-By editorial category (rules in [`data/categories.tsv`](data/categories.tsv)):
+By editorial category (rules in [`data/categories.tsv`](data/categories.tsv), applied
+after the fact; not Apple's):
 
 | category | words | examples |
 |---|---:|---|
-| sex and the body | 571 | penis, vagina, arousal, bisexual, lovers, titillate, panties |
-| profanity and insults | 251 | the usual, plus *dwarf*, *midget*, *redneck*, *dammit* |
-| violence, crime and weapons | 217 | murder, rape, bullet, abduct, behead, hijack, slave, terrorism |
-| death and medicine | 152 | suicide, autopsy, amputee, colon, cervix, chlamydia, Ebola, urine, cyanide |
-| slurs | 105 | (not reproduced here; blurred by default on the live page) |
-| religion | 101 | Islam, gospel, Psalms, sacrament, Satan, demon, sharia, jihad, gods |
-| race and ethnicity | 84 | Arab, Afro, Aryan, ghetto, skinhead |
-| drugs and alcohol | 76 | cocaine, cannabis, marijuana, morphine, drunk, binge |
-| nazism and hate groups | 50 | Hitler, Nazi, Auschwitz, Dachau, Gestapo, Klan, swastika, fascism |
-| reproductive health | 34 | abortion, condom, afterbirth, circumcision, castration |
-| other / names and places | 62 | *Hallie*, *Mollie*, *Yaroslavl*, *moshes*, *analeptics* |
+| sex and the body | 537 | *penis*, *vagina*, *arousal*, *bisexual*, *titillate* |
+| profanity and insults | 222 | the usual, plus *redneck*, *dammit* |
+| violence, crime and weapons | 202 | *murder*, *rape*, *bullet*, *abduct*, *behead*, *hijack* |
+| death and medicine | 131 | *suicide*, *autopsy*, *amputee*, *cervix*, *chlamydia*, *urine* |
+| religion | 91 | *Islam*, *gospel*, *psalms*, *sacrament*, *Satan*, *sharia*, *jihad* |
+| slurs | 93 | (not reproduced here; blurred by default on the live page) |
+| race and ethnicity | 81 | *Arab*, *Aryan*, *ghetto*, *skinhead* |
+| drugs and alcohol | 68 | *cocaine*, *cannabis*, *marijuana*, *morphine* |
+| nazism and hate groups | 48 | *Hitler*, *Nazi*, *Auschwitz*, *gestapo*, *swastika*, *fascism* |
+| reproductive health | 34 | *abortion*, *condom*, *afterbirth*, *circumcision* |
+| politics | 2 | *Syria*, *Hussein* |
+| lookalikes | 22 | spelled like a sensitive word: *rapeseed*, *virginals* |
+| other, names and places | 70 | see the [live page](https://thewingthewong.github.io/nosuggest/) |
 
-Some contrasts from the same run: *Stalin* is suggested and *Hitler* is not;
-*Christian* and *Muslim* are suggested and *Islam* is not; *pistol* and
-*firearm* are, *bullet* is not; *euthanasia*, *overdose*, *tampon*,
-*contraception* and *lesbian* are suggested, *suicide*, *abortion*, *condom*
-and *gay* (probed separately, it is three letters) are not. Political names
-are untouched: *Trump*, *Putin*, *Tibet*, *Taiwan*, *Kashmir*, *Palestine* and
-*Gaza* are all suggested, the opposite of the iOS keyboard list, which is full
-of political phrases.
+Some contrasts, checked with `nosuggest word`: *Stalin* is suggested and
+*Hitler* is not; *Christian* and *Muslim* are suggested and *Islam* is not;
+*pistol* and *firearm* are, *bullet* is not; *euthanasia*, *overdose*, *tampon*,
+*contraception* and *lesbian* are suggested, *suicide*, *abortion* and *condom*
+are not. Political names are mostly left alone: *Trump*, *Putin*, *Tibet*,
+*Taiwan*, *Kashmir*, *Palestine* and *Gaza* are suggested (they were probed
+separately, as most aren't in SCOWL); *Syria* and *Hussein* are not. The iOS
+keyboard list, by contrast, is full of political phrases.
 
 Hunspell, the open-source checker in LibreOffice, marks 27 entries in its
-`en_US` dictionary `NOSUGGEST`. macOS suppresses 23 of them, rejects 2 as
-misspellings, is borderline on 1 and lacks 1. None is suggested.
+`en_US` dictionary `NOSUGGEST`, all profanity or slurs. On macOS, 23 of them
+are on the final list, 2 are rejected as misspellings, 1 is borderline, 1 is not
+in SCOWL and 0 are suggested.
 
 ## Every language has its own list
 
-The same 25 concepts, translated and probed with eight typos each in the
-seven languages below. Red means accepted but never suggested.
+The same 25 concepts, translated into seven of the roughly forty languages the
+Mac checks, each probed with every keyboard-plausible typo (about 82 per
+word). Red means accepted but never suggested.
 
 ![Seven-language matrix](assets/matrix.png)
 
-67 of the 175 cells are suppressed. *Hitler*, *Nazi*, *marijuana* and
-*vagina* are suppressed in all seven languages and *Islam* in six (not
-Portuguese). The rest varies: *abortion* only in English and Spanish, *suicide*
-in English, German, French and Spanish, *Stalin* only in German, *lesbian*,
-*tampon* and *Muslim* only in Spanish. Dutch suppresses *kanker* (cancer), which
-is also one of the commonest Dutch swear words. The verdicts are nearly all 8/8
-or 0/8, so there is little doubt about any cell; the few inconclusive ones are
-in italics on the [live page](https://thewingthewong.github.io/nosuggest/).
+65 of the 175 cells are suppressed. Suppressed in every language: *vagina*, *marijuana*, *Hitler*, *Nazi*.
+Nearly every cell is all or nothing: 172 of the 175 came back from every typo or from
+none. *Islam* is suppressed in six languages (not Portuguese, where *islã* comes
+back) and *gay* in five (not German or French). The rest varies: *abortion* only
+in English and Spanish; *suicide* in English and German (in French and Spanish
+only another form comes back); *Stalin* only in German; *lesbian*, *tampon* and
+*Muslim* only in Spanish. Dutch suppresses *kanker* (cancer), which is also one
+of the commonest Dutch swear words. Inconclusive cells are in italics on the
+[live page](https://thewingthewong.github.io/nosuggest/).
 
 ## Quickstart
 
@@ -127,141 +149,153 @@ lesbian  ->  SUGGESTED   (8/8 typos brought it back)
   yes  lessbian insertion [lesbian]
 ```
 
-The full census downloads the SCOWL word lists (pinned by hash), probes
-every word and runs the control sample. It takes about 30 minutes, because
-the system spell server answers about 175 guesses a second no matter how many
-clients ask:
+The full census downloads the SCOWL word lists (pinned by hash), runs both
+passes and the control sample. It takes about 45 minutes, because the system
+spell server answers about 175 guesses a second however many clients ask:
 
 ```
 ./scripts/run-census.sh          # -> data/<your macOS version>/
-./scripts/build-site.sh          # -> docs/data/ for the explorer
+./scripts/build-site.sh          # -> docs/data/ and data/<version>/summary-en.md
 swift run -c release nosuggest concepts > docs/data/concepts.json
 ```
 
 Other commands: `nosuggest guesses suicde=suicide` prints the checker's raw
-answers as JSON; `nosuggest probe --lexicon words.txt` runs your own list;
-`--language de` switches language.
+answers as JSON; `nosuggest probe --lexicon words.txt` runs your own list
+(`--neighbourhood 1` for the exhaustive pass); `--language de` switches language.
 
 ## How it works
 
-**The probe.** For each word the checker accepts, nosuggest builds up to
-eight one-edit typos that a person might make: a deleted letter, two letters
-swapped, a neighbouring QWERTY key, a doubled letter. It never touches the
-first letter, because spell checkers rely on it heavily. A typo that is itself
-an accepted word (*form* for *from*) is skipped, because it tests nothing. Each
-remaining typo goes to `guesses(forWordRange:in:language:inSpellDocumentWithTag:)`
-with an explicit language and no automatic language detection.
+**Pass 1.** For each word the checker accepts, nosuggest builds eight one-edit
+typos that a person might make, cycling through a deleted letter, two letters
+swapped, a neighbouring QWERTY key and a doubled letter, starting from the
+middle of the word. It never touches the first letter, because spell checkers
+rely on it heavily. A typo the checker itself accepts as a word (*form* for
+*from*) is skipped, because it tests nothing. Each remaining typo goes to
+`guesses(forWordRange:in:language:inSpellDocumentWithTag:)` with an explicit
+language and automatic language detection off. The probe stops at the first
+typo that brings the word back.
 
-**Verdicts.** The probe stops at the first typo that brings the word back
-(**suggested**). A word that never comes back is checked once more: if some
-guess was another form of the same word (*Bostns* gives *Boston, Boston's*),
-it is a ranking quirk and is labelled **related**, not suppressed. Otherwise,
-with at least six genuine typos tested, the word is **suppressed**. For those
-words the probe also records whether the word appears in the completions of
-its own prefix and whether autocorrect ever produces it.
+**Pass 2.** Every word pass 1 flagged is tried again with its whole keyboard
+neighbourhood: every interior deletion and transposition, a substitution by
+every QWERTY neighbour, and an insertion of the same letter or a neighbouring
+key at every position. That is about six typos per letter.
 
-**Unambiguous typos.** A typo is unambiguous when the word is its only
-neighbour within one edit in a 665,000-word list (SCOWL up to size 95, the
-largest and strictest set). Asked about such a typo, a checker that has the
-word has no competing candidate to offer. 1,417 of the suppressed words
-missed on two or more of these; ordinary words come back from 99.6% of them.
+**Related forms.** If the checker answers a typo with another form of the word
+that is *further* from the typo than the word itself (*Bostns* gives *Boston's*
+instead of *Bostons*), the word is labelled **related**, not suppressed: the
+checker found the right family and ranked the wrong member. A related form
+that is itself one edit from the typo (*suicied* gives *suicided*) is just a
+competitor and clears nothing.
 
-**The control.** A checker can miss the right word for ordinary reasons, so
-the census also ran all eight typos, with no early stop, on 3,000 random
-lexicon words (2,247 lowercase and 243 capitalised words that the checker
-accepts). Ordinary words come back from 99.3% (deletions) to 99.8%
-(substitutions) of their typos; capitalised words from 98.0% to 99.2%.
+**The control.** Eight typos, no early stop, on 3,000 random lexicon words
+(2,264 lowercase and 244 capitalised that the checker accepts). Over all
+their typos, 99.6% brought the word back. Among words that came back at least
+once, the rate per typo kind ranges from 99.2% to 99.8%.
 
 ![Control histogram](assets/control.svg)
 
-The histogram (lowercase words) is bimodal. 2,174 words came back from all
-eight typos and 52 from none (3 of those offered another form of the word),
-with almost nothing in between. The words in between are odd plurals
-and rare forms (*blockings*, *whitebaits*, *muchnesses*), and none of them
-reaches zero.
+The histogram (lowercase words) is bimodal: 2,189 words came back from all eight
+typos, 52 from none, and 23 sit in between. The ones in between are odd
+plurals and rare forms (*blockings*, *whitebaits*, *muchnesses*), the kind of
+word pass 2 exists to clear.
 
-**The audit.** A statistical model can't say whether a zero is deliberate, so
-I labelled two samples by hand, one judgement per word, and published the
-labels in [`data/26.5.1/`](data/26.5.1/):
+**The audit.** Neither pass can say whether a zero is deliberate, so I
+labelled three samples by hand with one rubric (obvious sensitive meaning;
+spelled like one; no apparent reason) and published the labels in
+[`data/26.5.1/`](data/26.5.1/):
 
-| sample | n | obvious sensitive meaning | spelled like one | no apparent reason |
+| sample | n | sensitive meaning | lookalike | no apparent reason |
 |---|---:|---:|---:|---:|
-| every control word judged suppressed (49 lowercase, 2 capitalised) | 51 | 46 | 4 (*copulatives*, *daemons*, *fyke*, *niggles*) | 1 (*rabidness*) |
-| 200 words drawn at random from the list (seed 20261108) | 200 | 184 | 9 (*analeptics*, *rapeseed*, *rectus*, *virginals*, ...) | 7 (3.5%, 95% CI 1.7-7.0%) |
+| random words from the final list | 200 | 192 (96%) | 3 | 5 (2.5%, 95% CI 1.1%-5.7%) |
+| control words flagged by pass 1 | 53 | 48 | 4 | 1 |
+| random words the checker suggests (base rate) | 200 | 26 (13%) | 1 | 173 |
 
-Projected over the list, about 60 words (95% CI 29-120) have no apparent
-reason: *Balkan*, *Yaroslavl*, *moshes*, *pontes*. Those are either a
-checker quirk or a reason I can't see. A separate rerun of 400 words, 200 from
-each side, gave 400 identical verdicts (`scripts/stability.sh`).
+The rubric is generous on purpose (*whites*, *paramedics* and *obits* count as
+sensitive in the base-rate sample), and it is one person's judgement, made
+knowing which sample each word came from. The base rate is there so the
+96% figure means something.
+Projected over the list, about 40 words (95% CI 17-92) have no apparent
+reason; the ones in the sample are *cootie*, *jivey*, *nautch*, *rabidness*, *undead*.
 
 ## Design decisions and trade-offs
 
 - **Black box, not reverse engineering.** The iOS list was recovered by
   decoding Apple's hash tables, which is exact but has to be redone whenever
   the format changes. nosuggest only uses public AppKit API, so anyone can
-  rerun it on any macOS version in one command and diff the result. The cost
-  is that it can only find words that are in its input list, and it can't see
-  *why* a word is suppressed.
-- **Conservative by construction.** Case-insensitive matching (if *Suicide*
-  were offered for *suicde*, that would count as suggested), the related-form
-  rule, skipping typos that are real words, and the strictest neighbour list
-  all push errors toward "suggested". The list is a lower bound.
+  rerun it on any macOS version and diff the result. The cost is that it can
+  only find words that are in its input list, and it can't see *why* a word is
+  suppressed.
+- **Errors pushed toward "suggested".** Case-insensitive matching (if
+  *Suicide* were offered for *suicde*, that would count), the related-form
+  rule, and a second pass that clears a word on a single hit out of about 90 all
+  favour leaving a word off the list. The list can still contain words the
+  checker would return from a typo outside its neighbourhood (a typo in the
+  first letter, or two edits away).
+- **Two passes instead of one big one.** The full neighbourhood on all
+  108,930 words would take about 15 hours at the spell server's rate. Eight typos
+  settle 98% of words in 20 minutes; the exhaustive pass then only runs where
+  it matters.
 - **Child processes, not threads.** `NSSpellChecker` is not documented as
-  thread-safe and the spell server is the bottleneck anyway: one client gets
-  about 100 guesses a second, four get about 175 in total. `--jobs` splits
+  thread-safe, and the spell server is the bottleneck anyway: one client gets
+  about 100 guesses a second, four get about 175 between them. `--jobs` splits
   the lexicon round-robin across child processes.
 - **Swift, AppKit only.** No dependencies. The probing logic lives in
   `NoSuggestCore`, which has no AppKit import and is tested against a
-  simulated checker with planted suppressed words and a configurable miss rate.
+  simulated checker with known ground truth.
 
 ## Tests
 
-`swift test` runs 23 tests, most of them property tests over randomised
-inputs:
+`swift test` runs 26 tests. The property tests run over seeded random inputs:
 
-- every typo in every battery is exactly one optimal-string-alignment edit
-  from its source and keeps the first letter;
+- every typo in every pass-1 battery and every pass-2 neighbourhood is exactly
+  one optimal-string-alignment edit from its source and keeps the first letter;
 - `allEdits` equals the distance-one neighbourhood, checked in both
   directions;
-- with a simulated checker that drops 30% of correct candidates, the prober
-  finds every planted word and flags at most 2 of about 11,000 ordinary words
-  (the theoretical rate is 0.3^8, about 7 in 100,000);
-- the audit parser counts labels and computes a Wilson interval that
-  brackets the observed rate;
+- with a simulated checker that drops 30% of correct candidates independently,
+  pass 1 finds every planted word and flags at most 2 of about 11,000 ordinary
+  ones;
+- with a simulated checker that ranks out 200 "hard" words on 75% of typos
+  (the real failure mode: a whole word that is rarely offered), pass 1 is
+  fooled by many of them, pass 2 clears all but at most 2, and no planted word
+  is ever cleared;
 - the related-form rule accepts real inflections (*Bostons*/*Boston's*,
-  *bared*/*bare*) and rejects the lookalikes the real checker returned for
-  suppressed words (*Hitler*/*Hitter*, *suicide*/*suited*, *condom*/*condo*).
+  *bared*/*bare*), rejects the lookalikes the real checker returned for
+  suppressed words (*Hitler*/*Hitter*, *suicide*/*suited*) and ignores a related
+  form that is itself one edit from the typo (*suicided* for *suicied*);
+- the audit parser counts labels and computes a Wilson interval.
 
-CI runs the tests on a GitHub macOS runner, then runs a live probe against
-that runner's spell checker and prints the result.
+CI builds and tests on a GitHub macOS runner, runs a live probe against that
+runner's spell checker, and runs `nosuggest check-readme`, which fails if a
+headline number in this README doesn't match `docs/data/summary-en.json`.
 
 ## Limitations
 
-- **Input-bounded.** Only words in SCOWL (size 70 and below, about 129,000
-  entries) were probed. Slang, new coinages and most names aren't there.
-  Words shorter than four letters (*sex*, *gay*) were skipped in the census
-  because their typos collide with too many other words, though
-  `nosuggest word` will probe them.
-- **Names are noisy.** The capitalised list includes first names (*Hallie*,
-  *Mollie*, *Shawna*) that may simply be low-frequency rather than deliberately
-  suppressed. The capitalised control quantifies this; treat individual
-  names with caution.
-- **Lookalikes.** Some suppressed words look like collateral damage from
-  matching on spelling: *analeptics*, *copula*, *colones*, *clansman*,
-  *cockier*. That is an inference from the pattern, not something the probe
-  can confirm.
-- **One machine, one version.** This census is macOS 26.5.1 (25F80). iOS's
-  `UITextChecker` likely shares the engine but was not tested.
-- **The categories are mine.** `data/categories.tsv` is a set of hand-written
-  rules applied after the fact to make the list browsable. Apple's own
-  grouping, if there is one, isn't visible from outside.
+- **Input-bounded.** Only SCOWL words (size 70 and below) were probed. Slang,
+  new coinages and most names aren't there. Words shorter than four letters
+  (*sex*, *gay*) were left out of the census, because their typos collide with
+  too many other words. `nosuggest word` will probe them: *gay* comes back from none of 6
+  typos and *sex* from none of 5, one short of the census's bar.
+- **The neighbourhood is finite.** First-letter typos and two-edit typos are
+  never tried, so a listed word might still come back from one of those.
+- **One machine, one version.** This census is macOS 26.5.1 (25F80), the
+  version on the machine that ran it; macOS 27 was not tested. iOS's
+  `UITextChecker` likely shares the engine but was not tested either.
+- **Repeatability.** A rerun of 400 words (200 from each side of pass 1) with
+  the same typos gave 400 identical verdicts, which shows the checker is
+  deterministic. That does not show the verdicts are robust to the choice of
+  typos; pass 2 is the check for that.
+- **The categories and the audit labels are mine.** They are applied after the
+  fact to make the list browsable and to put a number on "is this deliberate".
+  Apple's own grouping, if there is one, isn't visible from outside.
 
 ## Data
 
-- `data/<version>/suppressed-en.txt`: the list, one word per line.
-- `data/<version>/probe-en.jsonl.gz`: every word, every typo, every guess.
-- `data/<version>/control-en.jsonl`: the control sample.
-- `data/<version>/summary-en.md`: the numbers in this README.
+- `data/26.5.1/suppressed-en.txt`: the final list, one word per line.
+- `data/26.5.1/probe-en.jsonl.gz`: pass 1, every word, every typo, every guess.
+- `data/26.5.1/verify-en.jsonl.gz`: pass 2, every flagged word with its whole neighbourhood.
+- `data/26.5.1/control-en.jsonl`: the control sample.
+- `data/26.5.1/audit-*.tsv`: the hand labels.
+- `data/26.5.1/summary-en.md`: every number in this README.
 - `docs/data/`: what the explorer loads.
 
 ## References

@@ -30,47 +30,55 @@ async function load() {
 }
 
 function renderFacts(s) {
-  const c = s.census;
+  const c = s.census, f = s.final;
   document.querySelectorAll('[data-fill="os"]').forEach((el) => (el.textContent = "macOS " + s.os.replace(/^Version /, "")));
   document.querySelectorAll('[data-fill="generated"]').forEach((el) => (el.textContent = s.generated.slice(0, 10)));
-  const tested = c.tested;
+  const avg = Math.round(s.verifyTypos / c.suppressed);
   $("headline-stats").innerHTML =
-    `Out of ${fmt(tested)} English words that macOS accepts, <strong>${fmt(c.suppressed)}</strong> never came back as a suggestion. ` +
-    `${pct(c.suppressedEmptyListShare, 0)} of their typos got no suggestions at all, ` +
-    `and ${fmt(c.suppressedAlsoMissingFromCompletions)} of them are also missing from word completion.`;
+    `Out of ${fmt(c.tested)} English words that macOS accepts, <strong>${fmt(f.suppressed)}</strong> never come back as a suggestion. ` +
+    `Each was tried with every keyboard-plausible one-letter typo, about ${avg} per word. ` +
+    `${pct(f.suppressedEmptyListShare, 0)} of those typos got no suggestions at all, ` +
+    `and ${fmt(f.suppressedAlsoMissingFromCompletions)} of the words are also missing from word completion.`;
+  $("list-text").innerHTML =
+    `Every word here passes the spell check when typed correctly. A first pass tried eight typos on each of ${fmt(c.tested)} words and flagged ${fmt(c.suppressed)}; ` +
+    `a second pass tried every keyboard-plausible typo on those, ${fmt(s.verifyTypos)} in all, and cleared ${fmt(s.cleared.length)} where some typo brought back the word or another form of it ` +
+    `(${["terrorism", "Zionism", "killer", "Hallie", "analeptics"].map((w) => s.cleared.find((x) => x[0] === w)).filter(Boolean).slice(0, 5).map((x) => `<em>${esc(x[0])}</em> from <em>${esc(x[1])}</em>`).join(", ")}). ` +
+    `Words where the checker offered a different form of the same word instead (<em>Boston's</em> for <em>Bostns</em>) are not counted. ` +
+    `The categories are editorial, assigned by hand-written rules in <a href="https://github.com/TheWingTheWong/nosuggest/blob/main/data/categories.tsv"><code>data/categories.tsv</code></a>.`;
 
   const k = s.control;
-  const ordinaryRate = k.perKind.reduce((x, r) => x + r.hits, 0) / k.perKind.reduce((x, r) => x + r.trials, 0);
+  const all = k.perKind.reduce((x, r) => x + r.trials, 0), hits = k.perKind.reduce((x, r) => x + r.hits, 0);
   $("method-text").innerHTML =
-    `A spell checker misses the right word sometimes for ordinary reasons. To measure how often, the probe ran all eight typos on ` +
-    `${fmt(k.wordsTested)} random lowercase words and counted how many typos brought each one back. ` +
-    `Words that come back at all come back from ${pct(ordinaryRate)} of their typos. Rerunning 400 words gave identical verdicts.`;
+    `A spell checker misses the right word sometimes for ordinary reasons. To see how often, eight typos were tried, with no early stop, on ` +
+    `${fmt(k.wordsTested)} random lowercase words that macOS accepts. Words that came back at all came back from ${pct(hits / all)} of their typos.`;
   $("hist-caption").textContent =
     `${fmt(k.wordsTested)} random lowercase words, by how many of their eight typos brought them back (log scale). The bar at zero is words that never came back` +
     (k.controlRelated ? `, or came back only as another form of the word (${k.controlRelated} of these)` : "") + `.`;
-  const z = s.auditControlZeros, a = s.auditSample;
+  const z = s.auditControlZeros, a = s.auditSample, b = s.auditBaseRate;
+  const share = (x) => pct(x.topical / x.size, 0);
   $("fp-text").innerHTML =
-    `Only ${k.histogram[0]} of ${fmt(k.wordsTested)} random lowercase words missed all eight (${k.controlRelated} of those came back as another form), and they are not random-looking. ` +
-    `${z ? `Of the ${z.size} control words judged suppressed, lowercase and capitalised, ${z.topical} have an obvious sensitive meaning, ${z.lookalike} are spelled like one ` +
-    `(${z.lookalikeWords.map(esc).join(", ")}), and ${z.none} has no apparent reason (${z.noneWords.map(esc).join(", ")}). ` : ""}` +
-    (a ? `In a seeded random sample of ${a.size} words from the list, ${a.none} (${pct(a.noneRate)}, 95% interval ${pct(a.noneLow)} to ${pct(a.noneHigh)}) ` +
-      `have no apparent reason: ${a.noneWords.map(esc).join(", ")}. Projected over the list, that is about ${Math.round(a.noneRate * c.suppressed)} words. ` +
-      `The labels are one person's judgement and are published in the repository so you can disagree with them.` : "");
+    `The middle of the histogram is nearly empty, and the zeros are not random-looking. Three samples were labelled by hand with the same rubric ` +
+    `(an obvious sensitive meaning, spelled like one, or no apparent reason):` +
+    `<ul class="audit">` +
+    (z ? `<li>all ${z.size} control words flagged by the first pass: ${share(z)} sensitive, ${z.none} with no apparent reason;</li>` : "") +
+    (a ? `<li>${a.size} words drawn at random from the final list: ${share(a)} sensitive, ${a.lookalike} lookalikes, ${a.none} (${pct(a.noneRate)}, 95% interval ${pct(a.noneLow)} to ${pct(a.noneHigh)}) with no apparent reason: ${a.noneWords.map(esc).join(", ")};</li>` : "") +
+    (b ? `<li>for comparison, ${b.size} words drawn at random from the words macOS <em>does</em> suggest: ${share(b)} sensitive.</li>` : "") +
+    `</ul>The labels are one person's judgement and are in the repository so you can disagree with them.`;
 
   const cmp = s.comparison;
   $("ios-text").innerHTML =
     `This week's reporting on Apple's "grey list" was about the iPhone keyboard. Derik Kauffman recovered it from iOS 27.0: ` +
     `${fmt(cmp.iosPhrases)} English entries, every one of them a phrase of two to six words, used to stop predictions and swipe typing. ` +
     `The spell checker's list is a different mechanism: it works on single words, and ` +
-    `<strong>${fmt(cmp.suppressedNotInIOS)}</strong> of the ${fmt(cmp.suppressedNotInIOS + cmp.suppressedInIOSPhrase)} words here do not occur in any iOS phrase at all.`;
+    `<strong>${fmt(cmp.suppressedNotInIOS)}</strong> of the ${fmt(cmp.suppressedNotInIOS + cmp.suppressedInIOSPhrase)} words here do not occur in any iOS entry at all.`;
   const hun = Object.entries(cmp.hunspellNoSuggest);
-  const hunSup = hun.filter(([, v]) => v === "suppressed").length;
+  const count = (v) => hun.filter(([, x]) => x === v).length;
   const hunSug = hun.filter(([, v]) => v === "suggested").map(([w]) => w);
   $("hunspell-text").innerHTML =
     `Open-source spell checkers do something similar, in the open. The Hunspell <code>en_US</code> dictionary used by LibreOffice marks ` +
-    `${hun.length} entries <code>NOSUGGEST</code>, all of them profanity or slurs. macOS suppresses ${hunSup} of them` +
-    (hunSug.length ? ` and still suggests ${hunSug.length} (${hunSug.map(esc).join(", ")})` : "") +
-    `. The difference is scope: Hunspell's list is 27 lines anyone can read; the Mac's covers medicine, religion, crime and history, and is not published.`;
+    `${hun.length} entries <code>NOSUGGEST</code>, all of them profanity or slurs. macOS suppresses ${count("suppressed")} of them` +
+    (hunSug.length ? ` and still suggests ${hunSug.length} (${hunSug.map(esc).join(", ")})` : ", suggests none of them") +
+    `. The difference is scope: Hunspell's list is ${hun.length} lines anyone can read; the Mac's covers medicine, religion, crime and history, and is not published.`;
 }
 
 function renderSpecimens(list) {
@@ -143,7 +151,7 @@ function renderRows() {
   const rows = state.filtered.slice(0, state.shown).map((w) => {
     const hide = w.cat === SLURS && !state.showSlurs;
     const ex = w.ex[0] || [];
-    const offered = ex.length > 1 ? ex.slice(1, 5).map(esc).join(", ") : "no guesses";
+    const offered = (ex.length > 1 ? ex.slice(1, 5).map(esc).join(", ") : "no guesses") + ` <span class="n">(0 of ${w.n} typos)</span>`;
     const word = hide ? `<span class="blur" title="Click to reveal">${esc(w.w)}</span>` : esc(w.w);
     const typo = hide ? `<span class="blur">${esc(ex[0] || "")}</span>` : `<span class="t">${esc(ex[0] || "")}</span>`;
     return `<tr><td class="w">${word}</td><td class="cat">${esc(w.cat)}</td><td class="ex">${typo}: ${hide ? "" : offered}</td><td class="ios">${w.ios ? "yes" : ""}</td></tr>`;
@@ -178,6 +186,7 @@ function renderMatrix(m) {
   const everywhere = m.rows.filter((r) => m.languages.every((l) => r.cells[l].verdict === "suppressed")).map((r) => r.concept);
   $("matrix-note").textContent =
     `${sup} of ${all} cells are suppressed. Suppressed in every language: ${everywhere.join(", ")}. ` +
+    `Each cell tried every keyboard-plausible typo of the word, ${Math.round(m.rows.flatMap((r) => m.languages.map((l) => r.cells[l].trials)).reduce((x, y) => x + y, 0) / all)} on average. ` +
     `Italic cells were inconclusive (too few genuine typos, or only another form came back). Hover a cell for the evidence.`;
 }
 

@@ -22,3 +22,5 @@ jobs:
         run: |
           .build/release/nosuggest env
           .build/release/nosuggest word suicide lesbian Hitler Stalin
+      - name: README numbers match the published data
+        run: .build/release/nosuggest check-readme
