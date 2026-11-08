@@ -5,11 +5,12 @@
 **The macOS spell checker accepts 1,755 English words as correctly
 spelled but will not offer them as a correction from any keyboard-plausible
 typo.** Type *suicde* and it has no suggestions at all, though it knows
-*suicide*. *Aborion*, *murdr*, *Isalm*, *gospl* and *Hiter* get the same
-treatment, while *lesbain*, *euthanasa*, *Chrstian* and *Stlin* come back right
-away. nosuggest finds these words from the outside, through the public
+*suicide*. *Aborion*, *Isalm*, *gospl* and *cocane* get the same empty answer;
+*Hiter* gets fifteen suggestions, none of them *Hitler*. Meanwhile *lesbain*,
+*euthanasa*, *Chrstian* and *Stlin* come back right away. nosuggest finds these words from the outside, through the public
 `NSSpellChecker` API that TextEdit, Mail, Notes, Pages and Safari text fields
-use. It tried eight typos on each of 108,930 accepted words, then every
+use. It tried up to eight typos on each of 108,930 accepted words (stopping at the
+first that brought the word back), then every
 keyboard-plausible typo (about 90 per word) on the 1,798 that never
 came back, and kept only the words that still never came back. In a hand audit
 of 200 of them, 96% have an obvious sensitive meaning; in the same audit of
@@ -54,8 +55,8 @@ keyboard-plausible typo returns, in any form, are on the list.
 Of the 1,755 words on the final list:
 
 - **70.8%** of their typos got an empty guess list, not merely a list
-  without the word. Asked about *suicde*, *aborion*, *murdr* or *Isalm*, the
-  checker says "No Guesses Found".
+  without the word. Asked about *suicde*, *aborion*, *Isalm*, *gospl* or *cocane*,
+  the checker says "No Guesses Found".
 - **All 1,755** are also missing from completions of their own prefix, and
   none is ever produced by autocorrect. (A word autocorrect does produce, like
   *Mollie*, counts as offered and is not on the list.)
@@ -135,7 +136,7 @@ suicide  ->  SUPPRESSED   (0/8 typos brought it back)
    no  suiide deletion [suite, suited]
    no  suciide transposition [succeed]
    no  suidide substitution []
-   no  suiccide insertion []
+   no  suiccide insertion [suuccide]
    no  sucide deletion [succeed]
    no  suiicde transposition []
    no  sujcide substitution []
@@ -298,9 +299,12 @@ category row) doesn't match `docs/data/summary-en.json`.
   version on the machine that ran it; macOS 27 was not tested. iOS's
   `UITextChecker` likely shares the engine but was not tested either.
 - **Repeatability.** A rerun of 400 words (200 from each side of pass 1) with
-  the same typos gave identical verdicts (400 of 400), which shows the checker is
-  deterministic. That does not show the verdicts are robust to the choice of
-  typos; pass 2 is the check for that.
+  the same typos gave identical verdicts (400 of 400). Guess lists are not
+  perfectly stable, though: the checker sometimes adds a nonsense string that
+  it also accepts as a word (*suuccide*, *mupdr*), and those vary between runs
+  and over time, in control words as often as in listed ones. They never
+  contain a listed word. And a rerun with the same typos says nothing about
+  the choice of typos; pass 2 is the check for that.
 - **The categories and the audit labels are mine.** They are applied after the
   fact to make the list browsable and to put a number on "is this deliberate".
   Apple's own grouping, if there is one, isn't visible from outside.
@@ -313,17 +317,18 @@ category row) doesn't match `docs/data/summary-en.json`.
   on the full guess list).
 - `data/26.5.1/verify-en.jsonl.gz`: pass 2, every flagged word with its whole neighbourhood, same format.
 - `data/26.5.1/stability-en.txt`: the 400-word rerun.
-
-The census was produced by `scripts/run-census.sh`. After it ran, the
-related-form rule was tightened (see the commit log). The new rule is strictly
-narrower, so it can only change the verdict of a word that was labelled
-"related" or that autocorrect produces; those 266 words were re-probed with the
-new code and merged in. Every other verdict is what a full rerun gives, because
-the checker is deterministic.
 - `data/26.5.1/control-en.jsonl`: the control sample.
 - `data/26.5.1/audit-*.tsv`: the hand labels.
 - `data/26.5.1/summary-en.md`: every number in this README.
 - `docs/data/`: what the explorer loads.
+
+The census was produced by `scripts/run-census.sh`. After it ran, the
+related-form rule was tightened (see the commit log). The new rule is strictly
+narrower, so it can only change the verdict of a word that was labelled
+"related" or that autocorrect produces; those 266 words were re-probed with
+the new code and merged in. For every other word the new rule cannot change
+the verdict, and verdicts are stable on rerun, but the published files are a
+merge of two runs rather than one.
 
 ## References
 

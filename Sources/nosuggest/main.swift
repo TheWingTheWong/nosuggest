@@ -19,6 +19,7 @@ USAGE
                                            same concepts, every keyboard-plausible typo,
                                            across languages, as JSON
   nosuggest guesses <typo=word>...         raw guesses for typos, as JSON
+  nosuggest check-readme                   fail if README numbers drift from docs/data
   nosuggest env                            print OS, checker and user-dictionary details
 
 OPTIONS

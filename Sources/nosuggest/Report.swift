@@ -163,7 +163,8 @@ enum Report {
             if r.correctionHit == true { return [r.word, "autocorrect", ""] }
             if r.completionHit == true { return [r.word, "completion", ""] }
             let t = r.trials.first(where: \.related)
-            return [r.word, "related", t.map { "\($0.typo) -> \($0.guesses.first { Inflection.related($0, r.word) } ?? "")" } ?? ""]
+            let shown = t.flatMap { tr in tr.guesses.first { Inflection.related($0, r.word) } }
+            return [r.word, "related", t.map { "\($0.typo) -> \(shown ?? "(beyond the first eight guesses)")" } ?? ""]
         }.sorted { $0[0].lowercased() < $1[0].lowercased() }
         func isCap(_ w: String) -> Bool { w.first?.isUppercase ?? false }
         let ctl = ControlSummary(results: control.filter { !isCap($0.word) }, batterySize: 8)

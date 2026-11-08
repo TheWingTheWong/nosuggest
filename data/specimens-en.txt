@@ -10,7 +10,6 @@ cocane=cocaine
 alcohl=alcohol
 Hiter=Hitler
 Stlin=Stalin
-murdr=murder
 homicde=homicide
 tampn=tampon
 vagna=vagina

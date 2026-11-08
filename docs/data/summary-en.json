@@ -451,7 +451,7 @@
     [
       "junkies",
       "related",
-      "junkes -> "
+      "junkes -> (beyond the first eight guesses)"
     ],
     [
       "Kathrine",
@@ -732,7 +732,7 @@
     "suppressedWithUnambiguousEvidence" : 1733,
     "tested" : 1798
   },
-  "generated" : "2026-11-08T12:17:55Z",
+  "generated" : "2026-11-08T12:57:36Z",
   "language" : "en",
   "lexiconWords" : 128780,
   "os" : "Version 26.5.1 (Build 25F80)",

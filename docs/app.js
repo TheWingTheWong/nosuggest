@@ -40,7 +40,7 @@ function renderFacts(s) {
     `${pct(f.suppressedEmptyListShare, 0)} of those typos got no suggestions at all, ` +
     `and ${fmt(f.suppressedAlsoMissingFromCompletions)} of the words are also missing from word completion.`;
   $("list-text").innerHTML =
-    `Every word here passes the spell check when typed correctly. A first pass tried eight typos on each of ${fmt(c.tested)} words and flagged ${fmt(c.suppressed)}; ` +
+    `Every word here passes the spell check when typed correctly. A first pass tried up to eight typos on each of ${fmt(c.tested)} words, stopping at the first hit, and flagged ${fmt(c.suppressed)}; ` +
     `a second pass tried every keyboard-plausible typo on those, ${fmt(s.verifyTypos)} in all, and cleared ${fmt(s.cleared.length)}: ` +
     `${s.cleared.filter((x) => x[1] === "typo").length} came back from some typo (${s.cleared.filter((x) => x[1] === "typo").slice(0, 4).map((x) => `<em>${esc(x[0])}</em> from <em>${esc(x[2])}</em>`).join(", ")}), ` +
     `${s.cleared.filter((x) => x[1] === "related").length} came back only as another form, and ${s.cleared.filter((x) => x[1] === "autocorrect" || x[1] === "completion").length} through autocorrect. ` +
