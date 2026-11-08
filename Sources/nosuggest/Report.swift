@@ -61,8 +61,22 @@ enum Report {
         let comparison: Comparison
     }
 
+    /// Reads a JSONL file, or its committed `.gz` twin when the raw file
+    /// isn't there (a fresh clone only has the compressed copies).
     static func loadResults(_ path: String) -> [WordResult] {
-        guard let s = try? String(contentsOfFile: path, encoding: .utf8) else { fail("cannot read \(path)") }
+        var text = try? String(contentsOfFile: path, encoding: .utf8)
+        if text == nil, FileManager.default.fileExists(atPath: path + ".gz") {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/gunzip")
+            p.arguments = ["-c", path + ".gz"]
+            let pipe = Pipe()
+            p.standardOutput = pipe
+            try? p.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            text = String(decoding: data, as: UTF8.self)
+        }
+        guard let s = text else { fail("cannot read \(path) or \(path).gz") }
         let dec = JSONDecoder()
         return s.split(separator: "\n").map { try! dec.decode(WordResult.self, from: Data($0.utf8)) }
     }
