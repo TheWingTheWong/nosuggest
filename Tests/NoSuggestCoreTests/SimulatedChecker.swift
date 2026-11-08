@@ -13,19 +13,24 @@ struct SimulatedChecker: SpellOracle {
     let dictionary: Set<String>
     let suppressed: Set<String>
     var dropRate: Double = 0
+    /// Words the checker ranks out most of the time, whatever the typo:
+    /// rare words and odd forms. Each typo misses them with `hardDropRate`.
+    var hardWords: Set<String> = []
+    var hardDropRate: Double = 0.75
     var maxGuesses: Int = 12
     var salt: UInt64 = 0
 
     func isAccepted(_ word: String) -> Bool { dictionary.contains(word.lowercased()) }
 
     private func dropped(_ typo: String, _ word: String) -> Bool {
-        guard dropRate > 0 else { return false }
+        let rate = hardWords.contains(word) ? hardDropRate : dropRate
+        guard rate > 0 else { return false }
         var h: UInt64 = 1469598103934665603 ^ salt
         for b in (typo + "\u{1}" + word).utf8 {
             h = (h ^ UInt64(b)) &* 1099511628211
         }
         var rng = Stats.SplitMix64(seed: h)
-        return Double(rng.next() >> 11) / Double(1 << 53) < dropRate
+        return Double(rng.next() >> 11) / Double(1 << 53) < rate
     }
 
     func guesses(for typo: String) -> [String] {

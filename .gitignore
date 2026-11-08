@@ -8,3 +8,4 @@ xcuserdata/
 *.jsonl.part
 node_modules/
 data/*/probe-*.jsonl
+data/*/verify-*.jsonl

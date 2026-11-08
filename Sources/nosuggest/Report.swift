@@ -11,7 +11,8 @@ enum Report {
         let cat: String        // editorial category, see data/categories.tsv
         let ios: Bool          // appears inside an iOS keyboard blocklist phrase
         let hunspell: Bool     // NOSUGGEST in the Hunspell en_US dictionary
-        let ex: [[String]]     // per typo: [typo, guess1, guess2, ...]
+        let n: Int             // typos tested in the verification pass
+        let ex: [[String]]     // first typos: [typo, guess1, guess2, ...]
         let empty: Int         // typos that got an empty guess list
         let unamb: Int         // misses on unambiguous typos
         let completion: Bool?  // offered as a completion of its prefix
@@ -31,7 +32,14 @@ enum Report {
         let language: String
         let generated: String
         let lexiconWords: Int
+        /// Stage 1: every lexicon word, eight typos each.
         let census: CensusSummary
+        /// Stage 2: the words stage 1 flagged, every keyboard-plausible typo.
+        /// Its `suppressed` count is the published list.
+        let final: CensusSummary
+        let verifyTypos: Int
+        /// Words stage 1 flagged that stage 2 cleared: [word, typo that brought it back].
+        let cleared: [[String]]
         /// Control for lowercase words and for capitalised words (names,
         /// places, demonyms), which the checker treats differently.
         let control: ControlSummary
@@ -40,6 +48,7 @@ enum Report {
         /// and a random sample of the suppressed list.
         let auditControlZeros: Audit?
         let auditSample: Audit?
+        let auditBaseRate: Audit?
         /// Words that reached a decision (suggested, related or suppressed).
         let decided: Int
         let suppressedLowercase: Int
@@ -115,6 +124,8 @@ enum Report {
         let lang = opts.string("language", "en")
         let outDir = opts.string("out", "docs/data")
         let results = loadResults("\(dir)/probe-\(lang).jsonl")
+        let verify = loadResults("\(dir)/verify-\(lang).jsonl")
+        let finalVerdict = Dictionary(verify.map { ($0.word, $0.verdict) }, uniquingKeysWith: { a, _ in a })
         let control = loadResults("\(dir)/control-\(lang).jsonl")
         let sizes = loadSizes(opts.string("lexicon", "lexicon/en.txt"))
         let rules = loadCategories(opts.string("categories", "data/categories.tsv"))
@@ -126,6 +137,10 @@ enum Report {
         let os = env?["os"] as? String ?? "unknown"
 
         let census = CensusSummary(results: results)
+        let final = CensusSummary(results: verify)
+        let cleared: [[String]] = verify.filter { $0.verdict != .suppressed }.map { r in
+            [r.word, r.trials.first(where: \.hit)?.typo ?? r.trials.first(where: \.related)?.typo ?? ""]
+        }.sorted { $0[0].lowercased() < $1[0].lowercased() }
         func isCap(_ w: String) -> Bool { w.first?.isUppercase ?? false }
         let ctl = ControlSummary(results: control.filter { !isCap($0.word) }, batterySize: 8)
         let ctlCap = ControlSummary(results: control.filter { isCap($0.word) }, batterySize: 8)
@@ -133,14 +148,13 @@ enum Report {
         func audit(_ name: String) -> Audit? {
             (try? String(contentsOfFile: "\(dir)/audit-\(name)-\(lang).tsv", encoding: .utf8)).map(Audit.init(tsv:))
         }
-        let supAll = results.filter { $0.verdict == .suppressed }
+        let supAll = verify.filter { $0.verdict == .suppressed }
 
-        let flagged = results.filter { $0.verdict == .suppressed || $0.verdict == .borderline }
-        let words: [Word] = flagged.map { r in
+        let words: [Word] = supAll.map { r in
             Word(w: r.word, v: r.verdict.rawValue, size: sizes[r.word], cat: category(r.word, rules),
                  ios: ios.words.contains(r.word.lowercased()), hunspell: hunSet.contains(r.word.lowercased()),
-                 ex: r.trials.map { [$0.typo] + $0.guesses }, empty: r.emptyGuessLists, unamb: r.unambiguousMisses,
-                 completion: r.completionHit, correction: r.correctionHit)
+                 n: r.trials.count, ex: r.trials.prefix(6).map { [$0.typo] + $0.guesses }, empty: r.emptyGuessLists,
+                 unamb: r.unambiguousMisses, completion: r.completionHit, correction: r.correctionHit)
         }.sorted { ($0.size ?? 99, $0.w.lowercased()) < ($1.size ?? 99, $1.w.lowercased()) }
 
         var bySize: [String: [Int]] = [:]
@@ -148,13 +162,14 @@ enum Report {
             let k = String(sizes[r.word] ?? 0)
             var v = bySize[k] ?? [0, 0]
             v[0] += 1
-            if r.verdict == .suppressed { v[1] += 1 }
+            if finalVerdict[r.word] == .suppressed { v[1] += 1 }
             bySize[k] = v
         }
         var byCat: [String: Int] = [:]
         for w in words where w.v == "suppressed" { byCat[w.cat, default: 0] += 1 }
 
-        let byWord = Dictionary(results.map { ($0.word.lowercased(), $0.verdict.rawValue) }, uniquingKeysWith: { a, _ in a })
+        let byWord = Dictionary(results.map { ($0.word.lowercased(), (finalVerdict[$0.word] ?? $0.verdict).rawValue) },
+                                uniquingKeysWith: { a, _ in a })
         var hunVerdicts: [String: String] = [:]
         for h in hun { hunVerdicts[h] = byWord[h.lowercased()] ?? "not in lexicon" }
         let supWords = words.filter { $0.v == "suppressed" }
@@ -165,8 +180,9 @@ enum Report {
 
         let iso = ISO8601DateFormatter().string(from: Date())
         let summary = Summary(os: os, language: lang, generated: iso, lexiconWords: results.count,
-                              census: census, control: ctl, controlCapitalised: ctlCap,
-                              auditControlZeros: audit("control-zeros"), auditSample: audit("sample"), decided: decided,
+                              census: census, final: final, verifyTypos: verify.reduce(0) { $0 + $1.trials.count },
+                              cleared: cleared, control: ctl, controlCapitalised: ctlCap,
+                              auditControlZeros: audit("control-zeros"), auditSample: audit("sample"), auditBaseRate: audit("base-rate"), decided: decided,
                               suppressedLowercase: supAll.filter { !isCap($0.word) }.count,
                               suppressedCapitalised: supAll.filter { isCap($0.word) }.count,
                               bySize: bySize, byCategory: byCat, comparison: cmp)
@@ -188,45 +204,58 @@ enum Report {
     static func pct(_ x: Double) -> String { String(format: "%.1f%%", x * 100) }
 
     static func printMarkdown(_ s: Summary, words: [Word]) {
-        let c = s.census
+        let c = s.census, f = s.final
         print("## Census: \(s.os), language \(s.language)\n")
+        print("Stage 1, eight typos per word:\n")
         print("| | words |")
         print("|---|---:|")
         for k in ["suggested", "related", "suppressed", "borderline", "rejected", "untestable"] {
             print("| \(k) | \(c.counts[k] ?? 0) |")
         }
-        print("\nSuppressed words: \(c.suppressed)")
-        print("- with >= 2 misses on unambiguous typos: \(c.suppressedWithUnambiguousEvidence)")
-        print("- also absent from prefix completions: \(c.suppressedAlsoMissingFromCompletions)")
-        print("- never produced by autocorrect: \(c.suppressedNeverAutocorrected)")
-        print("- typos answered with an empty guess list: \(pct(c.suppressedEmptyListShare))")
+        print("\nStage 2, every keyboard-plausible typo of the \(c.suppressed) flagged words (\(s.verifyTypos) typos):\n")
+        for k in ["suppressed", "suggested", "related", "borderline"] { print("- \(k): \(f.counts[k] ?? 0)") }
+        print("- cleared: \(s.cleared.map { "\($0[0]) (\($0[1]))" }.joined(separator: ", "))")
+        print("\nFinal list: \(f.suppressed) words")
+        print("- with >= 2 misses on unambiguous typos: \(f.suppressedWithUnambiguousEvidence)")
+        print("- also absent from prefix completions: \(f.suppressedAlsoMissingFromCompletions)")
+        print("- never produced by autocorrect: \(f.suppressedNeverAutocorrected)")
+        print("- typos answered with an empty guess list: \(pct(f.suppressedEmptyListShare))")
         print("- lowercase: \(s.suppressedLowercase), capitalised: \(s.suppressedCapitalised)")
         for (label, k) in [("lowercase", s.control), ("capitalised", s.controlCapitalised)] {
-        print("\n## Control (\(label)): full 8-typo battery on \(k.wordsTested) random words\n")
-        print("Hit histogram (0...8): \(k.histogram.map(String.init).joined(separator: " "))")
-        for r in k.perKind {
-            print("- \(r.kind): \(pct(r.rate)) recovered (95% CI \(pct(r.low))-\(pct(r.high)), n=\(r.trials))")
+            print("\n## Control (\(label)): eight typos, no early stop, on \(k.wordsTested) random words\n")
+            print("Hit histogram (0...8): \(k.histogram.map(String.init).joined(separator: " "))")
+            let all = k.perKind.reduce(0) { $0 + $1.trials }, hits = k.perKind.reduce(0) { $0 + $1.hits }
+            print("Per-typo recovery, words that came back at least once:")
+            for r in k.perKind {
+                print("- \(r.kind): \(pct(r.rate)) (95% CI \(pct(r.low))-\(pct(r.high)), n=\(r.trials))")
+            }
+            print("- unambiguous typos: \(pct(k.unambiguousRate.rate)) (n=\(k.unambiguousRate.trials))")
+            print("- all four kinds together: \(pct(Double(hits) / Double(max(all, 1))))")
+            print("Control words flagged in stage 1: \(k.controlZeros.joined(separator: ", "))")
         }
-        print("- unambiguous typos: \(pct(k.unambiguousRate.rate)) (n=\(k.unambiguousRate.trials))")
-        print("Control words with 0/8: \(k.controlZeros.joined(separator: ", "))")
-        }
-        for (label, a) in [("Control words that missed all eight", s.auditControlZeros),
-                           ("Random sample of the suppressed list", s.auditSample)] {
+        for (label, a) in [("Control words flagged in stage 1", s.auditControlZeros),
+                           ("Random sample of the final list", s.auditSample),
+                           ("Random sample of suggested words (base rate)", s.auditBaseRate)] {
             guard let a else { continue }
             print("\n## Audit: \(label) (n=\(a.size))\n")
-            print("- topical: \(a.topical), lookalike: \(a.lookalike) (\(a.lookalikeWords.joined(separator: ", ")))")
-            print("- no apparent reason: \(a.none) = \(pct(a.noneRate)) (95% CI \(pct(a.noneLow))-\(pct(a.noneHigh))): \(a.noneWords.joined(separator: ", "))")
+            print("- topical: \(a.topical) = \(pct(Double(a.topical) / Double(max(a.size, 1))))")
+            print("- lookalike: \(a.lookalike) (\(a.lookalikeWords.joined(separator: ", ")))")
+            print("- no apparent reason: \(a.none) = \(pct(a.noneRate)) (95% CI \(pct(a.noneLow))-\(pct(a.noneHigh)))")
         }
         if let a = s.auditSample {
-            print(String(format: "Projected over %d suppressed words: %.0f with no apparent reason (95%% CI %.0f-%.0f)",
-                         c.suppressed, a.noneRate * Double(c.suppressed), a.noneLow * Double(c.suppressed), a.noneHigh * Double(c.suppressed)))
+            print(String(format: "Projected over %d words: %.0f with no apparent reason (95%% CI %.0f-%.0f)",
+                         f.suppressed, a.noneRate * Double(f.suppressed), a.noneLow * Double(f.suppressed), a.noneHigh * Double(f.suppressed)))
         }
-        print("\n## Categories (suppressed)\n")
+        print("\n## Suppression rate by SCOWL size (smaller = more common)\n")
+        for (size, v) in s.bySize.sorted(by: { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }) {
+            print("- size \(size): \(v[1]) of \(v[0]) = \(pct(Double(v[1]) / Double(max(v[0], 1))))")
+        }
+        print("\n## Categories (final list)\n")
         for (cat, n) in s.byCategory.sorted(by: { $0.value > $1.value }) { print("- \(cat): \(n)") }
         let cmp = s.comparison
         print("\n## Comparison\n")
-        print("iOS keyboard list: \(cmp.iosPhrases) phrases, \(cmp.iosWords) distinct words inside them")
-        print("Suppressed words that occur in some iOS phrase: \(cmp.suppressedInIOSPhrase); not in any: \(cmp.suppressedNotInIOS)")
+        print("iOS keyboard list: \(cmp.iosPhrases) entries, \(cmp.iosWords) distinct words inside them")
+        print("Final-list words that occur in some iOS entry: \(cmp.suppressedInIOSPhrase); not in any: \(cmp.suppressedNotInIOS)")
         print("Hunspell NOSUGGEST stems and their macOS verdicts:")
         for (w, v) in cmp.hunspellNoSuggest.sorted(by: { $0.key < $1.key }) { print("  \(w): \(v)") }
     }

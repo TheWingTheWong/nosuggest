@@ -112,6 +112,9 @@ public struct ProbePolicy: Sendable {
     /// Words shorter than this are untestable: their typos collide with too
     /// many other words to mean anything.
     public var minLength: Int = 4
+    /// Replace the battery with every keyboard-plausible single edit
+    /// (`Typos.neighbourhood`), with no early exit. The verification pass.
+    public var fullNeighbourhood: Bool = false
 
     public init() {}
 }
@@ -133,6 +136,16 @@ public struct Prober {
         guess.compare(word, options: .caseInsensitive) == .orderedSame
     }
 
+    /// A guess "stands in" for the word when it is another form of it that
+    /// is further from the typo than the word itself: "Bostns" -> "Boston's"
+    /// (two edits) instead of "Bostons" (one). That is the checker reaching
+    /// for the right family and ranking the wrong member, not suppression.
+    /// A related form that is itself one edit from the typo ("suicied" ->
+    /// "suicided") is a legitimate competitor and clears nothing.
+    static func isRelatedStandIn(_ guess: String, for word: String, typo: String) -> Bool {
+        Inflection.related(guess, word) && Typos.osaDistance(guess.lowercased(), typo.lowercased()) > 1
+    }
+
     public func probe(_ word: String) -> WordResult {
         // Internal capitals (BigQuery, NVIDIA) are brand spellings the checker
         // treats specially; their typos say nothing about suppression.
@@ -143,13 +156,19 @@ public struct Prober {
             return WordResult(word: word, verdict: .rejected, trials: [], completionHit: nil, correctionHit: nil)
         }
 
-        // Only genuine misspellings count: a typo that happens to be another
-        // accepted word ("form" -> "from") tells us nothing.
+        // Only genuine misspellings count: a typo the checker accepts as a
+        // word ("form" -> "from") tells us nothing. The checker is the only
+        // judge here; a typo that is in some bigger word list but that the
+        // checker rejects ("diety") is exactly the kind of typo to test.
         var trials: [Trial] = []
         var probed: [Typo] = []
-        for typo in Typos.battery(for: word, limit: policy.battery * 2) {
-            if probed.count == policy.battery { break }
-            if lexicon.contains(typo.text) || oracle.isAccepted(typo.text) { continue }
+        let candidates = policy.fullNeighbourhood
+            ? Typos.neighbourhood(of: word)
+            : Typos.battery(for: word, limit: policy.battery * 2)
+        let limit = policy.fullNeighbourhood ? Int.max : policy.battery
+        for typo in candidates {
+            if probed.count == limit { break }
+            if oracle.isAccepted(typo.text) { continue }
             probed.append(typo)
             let g = oracle.guesses(for: typo.text)
             let hit = g.contains { Self.matches($0, word) }
@@ -158,10 +177,10 @@ public struct Prober {
                 kind: typo.kind,
                 unambiguous: lexicon.isUnambiguous(typo: typo.text, for: word),
                 hit: hit,
-                related: !hit && g.contains { Inflection.related($0, word) },
+                related: !hit && g.contains { Self.isRelatedStandIn($0, for: word, typo: typo.text) },
                 guesses: g
             ))
-            if hit && policy.earlyExit { break }
+            if hit && policy.earlyExit && !policy.fullNeighbourhood { break }
         }
 
         if trials.contains(where: { $0.hit }) {

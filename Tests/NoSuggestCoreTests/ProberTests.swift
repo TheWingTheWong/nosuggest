@@ -49,6 +49,46 @@ final class ProberTests: XCTestCase {
         XCTAssertLessThanOrEqual(falsePositives, 2, "\(falsePositives) of \(ordinary)")
     }
 
+    /// The real false positives are word-level, not typo-level: a rare word
+    /// that the checker ranks out on most typos. Eight typos flag many of
+    /// them; the exhaustive second pass clears almost all, and never clears
+    /// a planted word.
+    func testSecondPassClearsHardWordsButKeepsPlantedOnes() {
+        let words = randomWords(count: 1200, seed: 77, lengths: 7...11)
+        var rng = Stats.SplitMix64(seed: 78)
+        let shuffled = words.shuffled(using: &rng)
+        let planted = Set(shuffled.prefix(40))
+        let hard = Set(shuffled.dropFirst(40).prefix(200))
+        let oracle = SimulatedChecker(dictionary: Set(words), suppressed: planted, dropRate: 0.02,
+                                      hardWords: hard, hardDropRate: 0.75)
+        let lex = Lexicon(words)
+        let stage1 = Prober(oracle: oracle, lexicon: lex)
+        var verifyPolicy = ProbePolicy()
+        verifyPolicy.fullNeighbourhood = true
+        let stage2 = Prober(oracle: oracle, lexicon: lex, policy: verifyPolicy)
+
+        let flagged = words.filter { stage1.probe($0).verdict == .suppressed }
+        let flaggedHard = flagged.filter(hard.contains).count
+        let survivors = Set(flagged.filter { stage2.probe($0).verdict == .suppressed })
+
+        XCTAssertGreaterThan(flaggedHard, 10, "stage 1 should be fooled by some hard words")
+        XCTAssertTrue(planted.isSubset(of: survivors))
+        XCTAssertLessThanOrEqual(survivors.intersection(hard).count, 2, "stage 2 should clear hard words")
+    }
+
+    func testNeighbourhoodIsSingleEditsKeepingFirstLetter() {
+        for w in randomWords(count: 300, seed: 5) + ["suicide", "Hitler", "deity"] {
+            let n = Typos.neighbourhood(of: w)
+            XCTAssertEqual(Set(n.map(\.text)).count, n.count)
+            XCTAssertGreaterThanOrEqual(n.count, 4 * w.count)
+            for t in n {
+                XCTAssertEqual(Typos.osaDistance(t.text, w), 1, "\(t.text) vs \(w)")
+                XCTAssertEqual(t.text.first, w.first)
+            }
+        }
+        XCTAssertTrue(Typos.neighbourhood(of: "deity").map(\.text).contains("diety"))
+    }
+
     func testRejectsWordsTheCheckerDoesNotKnow() {
         let oracle = SimulatedChecker(dictionary: ["receive"], suppressed: [])
         let r = Prober(oracle: oracle, lexicon: Lexicon(["receive"])).probe("recieve")
@@ -112,6 +152,14 @@ final class ProberTests: XCTestCase {
         let r = Prober(oracle: OffersPossessive(), lexicon: Lexicon(["Bostons", "Boston"])).probe("Bostons")
         XCTAssertEqual(r.verdict, .related)
         XCTAssertTrue(r.trials.allSatisfy(\.related))
+    }
+
+    /// "suicided" is one edit from "suicied", so offering it is not the
+    /// checker standing in a related form for "suicide".
+    func testNearbyRelatedFormDoesNotClearWord() {
+        XCTAssertFalse(Prober.isRelatedStandIn("suicided", for: "suicide", typo: "suicied"))
+        XCTAssertTrue(Prober.isRelatedStandIn("Boston's", for: "Bostons", typo: "Bostns"))
+        XCTAssertFalse(Prober.isRelatedStandIn("suite", for: "suicide", typo: "suiide"))
     }
 
     func testInternalCapitalsAreUntestable() {

@@ -132,6 +132,34 @@ public enum Typos {
         return out
     }
 
+    /// Every keyboard-plausible single edit that keeps the first letter:
+    /// each interior deletion and adjacent transposition, a substitution by
+    /// every QWERTY neighbour, and an insertion of the same letter or a
+    /// neighbouring key next to each interior position. About 6-7 typos per
+    /// letter. Used for the second, exhaustive verification pass.
+    public static func neighbourhood(of word: String) -> [Typo] {
+        let chars = Array(word)
+        let n = chars.count
+        guard n >= 3 else { return [] }
+        var out: [Typo] = []
+        var seen: Set<String> = [word]
+        func add(_ cs: [Character], _ kind: TypoKind, _ pos: Int) {
+            let s = String(cs)
+            if seen.insert(s).inserted { out.append(Typo(text: s, kind: kind, position: pos)) }
+        }
+        for i in 1..<n { var cs = chars; cs.remove(at: i); add(cs, .deletion, i) }
+        for i in 1..<(n - 1) where chars[i] != chars[i + 1] { var cs = chars; cs.swapAt(i, i + 1); add(cs, .transposition, i) }
+        for i in 1..<n {
+            let lower = Character(chars[i].lowercased())
+            for k in qwertyNeighbors[lower] ?? [] { var cs = chars; cs[i] = k; add(cs, .substitution, i) }
+        }
+        for i in 1...n {
+            let prev = Character(chars[i - 1].lowercased())
+            for k in [prev] + (qwertyNeighbors[prev] ?? []) { var cs = chars; cs.insert(k, at: i); add(cs, .insertion, i) }
+        }
+        return out
+    }
+
     static let alphabet = Array("abcdefghijklmnopqrstuvwxyz'-")
 
     /// Every string within one Damerau edit of `word` (lowercased), over a-z,

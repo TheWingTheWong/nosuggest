@@ -8,6 +8,8 @@ USAGE
   nosuggest word <word>...                 explain the verdict for each word
   nosuggest probe --lexicon <file> [--neighbors <file>] [--jobs N] [--out <file>]
                                            probe every word in a lexicon (JSON lines)
+  nosuggest probe ... --neighbourhood 1     exhaustive pass: every keyboard-plausible
+                                           single edit of each word (verification)
   nosuggest control --lexicon <file> [--neighbors <file>] [--sample N] [--seed S]
                     [--jobs N] [--out <file>]
                                            full battery on a random sample (no early exit)
@@ -171,7 +173,8 @@ case "probe":
     let jobs = opts.int("jobs", 4)
     if jobs > 1 { FileHandle.standardError.write(Data("probing \(words.count) words with \(jobs) workers\n".utf8)) }
     var extra: [String] = []
-    if opts.flags["full"] != nil { policy.earlyExit = false; extra = ["--full", "1"] }
+    if opts.flags["full"] != nil { policy.earlyExit = false; extra += ["--full", "1"] }
+    if opts.flags["neighbourhood"] != nil { policy.fullNeighbourhood = true; extra += ["--neighbourhood", "1"] }
     runSharded(words: words, neighborsPath: opts.flags["neighbors"], outPath: opts.flags["out"], jobs: jobs, extraArgs: extra)
 
 case "control":
