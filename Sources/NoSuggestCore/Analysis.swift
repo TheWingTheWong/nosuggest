@@ -102,17 +102,20 @@ public struct ControlSummary: Codable, Sendable {
     /// Fitted probability that a word which is *not* suppressed misses on
     /// every typo of a full battery.
     public let chanceAllMiss: Double
-    /// Zero-hit words in the control sample.
+    /// Control words judged suppressed (zero hits, no related form offered).
     public let controlZeros: [String]
+    /// Control words with zero exact hits where a related form was offered.
+    public let controlRelated: Int
 
     public init(results: [WordResult], batterySize: Int) {
-        let full = results.filter { $0.verdict != .rejected && $0.verdict != .untestable && $0.trials.count == batterySize }
+        let full = results.filter { [.suggested, .related, .suppressed].contains($0.verdict) && $0.trials.count == batterySize }
         self.batterySize = batterySize
         wordsTested = full.count
         var hist = Array(repeating: 0, count: batterySize + 1)
         for r in full { hist[r.trials.filter(\.hit).count] += 1 }
         histogram = hist
-        controlZeros = full.filter { r in !r.trials.contains(where: \.hit) }.map(\.word).sorted()
+        controlZeros = full.filter { $0.verdict == .suppressed }.map(\.word).sorted()
+        controlRelated = full.filter { $0.verdict == .related }.count
 
         let recovered = full.filter { $0.trials.contains(where: \.hit) }
         func rate(_ label: String, _ ts: [Trial]) -> KindRate {

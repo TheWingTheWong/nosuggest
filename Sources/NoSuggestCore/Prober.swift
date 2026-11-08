@@ -49,7 +49,11 @@ public enum Verdict: String, Codable, Sendable {
     case untestable
     /// Came back as a guess for at least one typo.
     case suggested
-    /// Never came back across a full battery of genuine typos.
+    /// Never came back exactly, but a different form of the same word did
+    /// ("Bostons" -> "Boston's"). A ranking quirk, not suppression.
+    case related
+    /// Never came back, and neither did any other form of it, across a full
+    /// battery of genuine typos.
     case suppressed
     /// Never came back, but too few genuine typos could be tested to say so.
     case borderline
@@ -60,7 +64,22 @@ public struct Trial: Codable, Sendable, Equatable {
     public let kind: TypoKind
     public let unambiguous: Bool
     public let hit: Bool
-    public let guessCount: Int
+    /// A different form of the word was offered (see `Inflection.related`).
+    public let related: Bool
+    /// The checker's guesses, best first, truncated to `Trial.keep`.
+    public let guesses: [String]
+    public var guessCount: Int { guesses.count }
+
+    public static let keep = 8
+
+    public init(typo: String, kind: TypoKind, unambiguous: Bool, hit: Bool, related: Bool = false, guesses: [String]) {
+        self.typo = typo
+        self.kind = kind
+        self.unambiguous = unambiguous
+        self.hit = hit
+        self.related = related
+        self.guesses = Array(guesses.prefix(Self.keep))
+    }
 }
 
 public struct WordResult: Codable, Sendable {
@@ -115,7 +134,9 @@ public struct Prober {
     }
 
     public func probe(_ word: String) -> WordResult {
-        guard word.count >= policy.minLength else {
+        // Internal capitals (BigQuery, NVIDIA) are brand spellings the checker
+        // treats specially; their typos say nothing about suppression.
+        guard word.count >= policy.minLength, !word.dropFirst().contains(where: \.isUppercase) else {
             return WordResult(word: word, verdict: .untestable, trials: [], completionHit: nil, correctionHit: nil)
         }
         guard oracle.isAccepted(word) else {
@@ -137,7 +158,8 @@ public struct Prober {
                 kind: typo.kind,
                 unambiguous: lexicon.isUnambiguous(typo: typo.text, for: word),
                 hit: hit,
-                guessCount: g.count
+                related: !hit && g.contains { Inflection.related($0, word) },
+                guesses: g
             ))
             if hit && policy.earlyExit { break }
         }
@@ -147,6 +169,9 @@ public struct Prober {
         }
         if trials.isEmpty {
             return WordResult(word: word, verdict: .untestable, trials: [], completionHit: nil, correctionHit: nil)
+        }
+        if trials.contains(where: \.related) {
+            return WordResult(word: word, verdict: .related, trials: trials, completionHit: nil, correctionHit: nil)
         }
 
         let prefix = String(word.dropLast())

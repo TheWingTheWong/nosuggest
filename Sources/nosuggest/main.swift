@@ -11,6 +11,8 @@ USAGE
   nosuggest control --lexicon <file> [--neighbors <file>] [--sample N] [--seed S]
                     [--jobs N] [--out <file>]
                                            full battery on a random sample (no early exit)
+  nosuggest report [--data <dir>] [--out <dir>]
+                                           summarise a census for the web explorer
   nosuggest env                            print OS, checker and user-dictionary details
 
 OPTIONS
@@ -150,11 +152,9 @@ case "word":
         let r = prober.probe(w)
         let hits = r.trials.filter(\.hit).count
         print("\(w)  ->  \(r.verdict.rawValue.uppercased())   (\(hits)/\(r.trials.count) typos brought it back)")
-        let oracle = prober.oracle
         for t in r.trials {
-            let g = oracle.guesses(for: t.typo)
-            let shown = g.prefix(5).joined(separator: ", ")
-            let mark = t.hit ? "yes" : " no"
+            let shown = t.guesses.prefix(5).joined(separator: ", ")
+            let mark = t.hit ? "yes" : (t.related ? "~  " : " no")
             print(String(format: "  %@  %-14@ %-13@ [%@]", mark, t.typo as NSString, t.kind.rawValue as NSString, shown as NSString))
         }
         if let c = r.completionHit { print("  completions of \"\(w.dropLast())\" include it: \(c ? "yes" : "no")") }
@@ -181,6 +181,9 @@ case "control":
     FileHandle.standardError.write(Data("control: full battery on \(sample.count) random words\n".utf8))
     runSharded(words: sample, neighborsPath: opts.flags["neighbors"] ?? lexPath, outPath: opts.flags["out"],
                jobs: opts.int("jobs", 4), extraArgs: ["--full", "1"])
+
+case "report":
+    Report.run(opts)
 
 case "env":
     let pi = ProcessInfo.processInfo

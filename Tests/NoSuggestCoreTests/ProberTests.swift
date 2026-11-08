@@ -17,7 +17,7 @@ final class ProberTests: XCTestCase {
         for w in dict {
             let r = prober.probe(w)
             XCTAssertNotEqual(r.verdict, .rejected)
-            if r.verdict == .suppressed || r.verdict == .borderline { found.insert(w) }
+            if [.suppressed, .borderline, .related].contains(r.verdict) { found.insert(w) }
             if r.verdict == .suggested { XCTAssertFalse(sup.contains(w), w) }
         }
         XCTAssertEqual(found, sup)
@@ -37,7 +37,7 @@ final class ProberTests: XCTestCase {
                 let r = prober.probe(w)
                 if sup.contains(w) {
                     planted += 1
-                    if r.verdict == .suppressed || r.verdict == .borderline { recalled += 1 }
+                    if [.suppressed, .borderline, .related].contains(r.verdict) { recalled += 1 }
                 } else if r.verdict != .untestable {
                     ordinary += 1
                     if r.verdict == .suppressed { falsePositives += 1 }
@@ -100,6 +100,23 @@ final class ProberTests: XCTestCase {
             XCTAssertEqual(r.verdict, .suggested)
             XCTAssertEqual(r.trials.count, 8, w)
         }
+    }
+
+    func testRelatedFormIsNotSuppression() {
+        struct OffersPossessive: SpellOracle {
+            func isAccepted(_ w: String) -> Bool { ["bostons", "boston"].contains(w.lowercased()) }
+            func guesses(for typo: String) -> [String] { ["Boston", "Boston's"] }
+            func completions(for prefix: String) -> [String] { [] }
+            func correction(for typo: String) -> String? { nil }
+        }
+        let r = Prober(oracle: OffersPossessive(), lexicon: Lexicon(["Bostons", "Boston"])).probe("Bostons")
+        XCTAssertEqual(r.verdict, .related)
+        XCTAssertTrue(r.trials.allSatisfy(\.related))
+    }
+
+    func testInternalCapitalsAreUntestable() {
+        let oracle = SimulatedChecker(dictionary: ["bigquery"], suppressed: [])
+        XCTAssertEqual(Prober(oracle: oracle, lexicon: Lexicon([])).probe("BigQuery").verdict, .untestable)
     }
 
     func testUnambiguity() {

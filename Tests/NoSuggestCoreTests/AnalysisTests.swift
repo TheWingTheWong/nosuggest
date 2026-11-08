@@ -57,10 +57,10 @@ final class AnalysisTests: XCTestCase {
     }
 
     func testCensusSummaryCounts() {
-        let t = Trial(typo: "x", kind: .deletion, unambiguous: true, hit: false, guessCount: 0)
+        let t = Trial(typo: "x", kind: .deletion, unambiguous: true, hit: false, guesses: [])
         let results = [
             WordResult(word: "a", verdict: .suppressed, trials: Array(repeating: t, count: 8), completionHit: false, correctionHit: false),
-            WordResult(word: "b", verdict: .suggested, trials: [Trial(typo: "y", kind: .deletion, unambiguous: false, hit: true, guessCount: 3)], completionHit: nil, correctionHit: nil),
+            WordResult(word: "b", verdict: .suggested, trials: [Trial(typo: "y", kind: .deletion, unambiguous: false, hit: true, guesses: ["b", "c", "d"])], completionHit: nil, correctionHit: nil),
             WordResult(word: "c", verdict: .rejected, trials: [], completionHit: nil, correctionHit: nil),
         ]
         let s = CensusSummary(results: results)
