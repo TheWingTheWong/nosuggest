@@ -1,0 +1,56 @@
+# Hand labels for the control words that missed all eight typos. One judgement per word, by the author:
+#   topical    an obvious sensitive reason (sex, violence, drugs, slurs, religion, death, ...)
+#   lookalike  no reason on its own, but spelled like a word that has one
+#   none       no apparent reason
+# Disagree? Edit the label and rerun `nosuggest report`.
+Australoid	topical	
+Islam	topical	
+abortions	topical	
+belch	topical	
+belched	topical	
+blacklist	topical	
+blotto	topical	
+bollixes	topical	
+cocks	topical	
+copulatives	lookalike	looks like "copulate"
+daemons	lookalike	looks like "demons"
+deathwatch	topical	
+diddling	topical	
+drunk	topical	
+fornicating	topical	
+fyke	lookalike	looks like "fuck"
+gringo	topical	
+gypper	topical	
+gyppers	topical	
+hearse	topical	
+homicidal	topical	
+humped	topical	
+impalement	topical	
+incubus	topical	
+inseminator	topical	
+knobbed	topical	
+leers	topical	
+lingam	topical	
+lovers	topical	
+molestations	topical	
+murdered	topical	
+niggles	lookalike	looks like a slur
+nymphet	topical	
+ordure	topical	
+pederast	topical	
+piddles	topical	
+playboy	topical	
+potheads	topical	
+puds	topical	
+rabidness	none	
+redskin	topical	
+retard	topical	
+shags	topical	
+sicko	topical	
+slays	topical	
+spank	topical	
+succubi	topical	
+swastika	topical	
+urine	topical	
+vixens	topical	
+wiener	topical	

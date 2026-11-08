@@ -36,8 +36,12 @@ enum Report {
         /// places, demonyms), which the checker treats differently.
         let control: ControlSummary
         let controlCapitalised: ControlSummary
-        let expectedFalsePositives: Double
-        let expectedFalsePositivesCapitalised: Double
+        /// Hand-labelled audits: every control word that missed all eight,
+        /// and a random sample of the suppressed list.
+        let auditControlZeros: Audit?
+        let auditSample: Audit?
+        /// Words that reached a decision (suggested, related or suppressed).
+        let decided: Int
         let suppressedLowercase: Int
         let suppressedCapitalised: Int
         let bySize: [String: [Int]]               // size -> [tested, suppressed]
@@ -91,7 +95,9 @@ enum Report {
                 for t in p.lowercased().split(whereSeparator: { !$0.isLetter }) { words.insert(String(t)) }
             }
         }
-        return (rows.count, words)
+        // "entries" counts every phrase including inflected forms, which is
+        // the figure Swipeblocked and the press quote.
+        return ((j["entries"] as? Int) ?? rows.count, words)
     }
 
     /// Stems flagged NOSUGGEST ("!") in a Hunspell .dic file.
@@ -123,12 +129,10 @@ enum Report {
         func isCap(_ w: String) -> Bool { w.first?.isUppercase ?? false }
         let ctl = ControlSummary(results: control.filter { !isCap($0.word) }, batterySize: 8)
         let ctlCap = ControlSummary(results: control.filter { isCap($0.word) }, batterySize: 8)
-        // Words that reached the decision point: every non-suggested word that
-        // went through a full battery, plus every suggested word (which would
-        // have, had it missed).
-        let decided = results.filter { [.suppressed, .suggested, .related].contains($0.verdict) }
-        let expectedFP = ctl.chanceAllMiss * Double(decided.filter { !isCap($0.word) }.count)
-        let expectedFPCap = ctlCap.chanceAllMiss * Double(decided.filter { isCap($0.word) }.count)
+        let decided = results.filter { [.suppressed, .suggested, .related].contains($0.verdict) }.count
+        func audit(_ name: String) -> Audit? {
+            (try? String(contentsOfFile: "\(dir)/audit-\(name)-\(lang).tsv", encoding: .utf8)).map(Audit.init(tsv:))
+        }
         let supAll = results.filter { $0.verdict == .suppressed }
 
         let flagged = results.filter { $0.verdict == .suppressed || $0.verdict == .borderline }
@@ -162,7 +166,7 @@ enum Report {
         let iso = ISO8601DateFormatter().string(from: Date())
         let summary = Summary(os: os, language: lang, generated: iso, lexiconWords: results.count,
                               census: census, control: ctl, controlCapitalised: ctlCap,
-                              expectedFalsePositives: expectedFP, expectedFalsePositivesCapitalised: expectedFPCap,
+                              auditControlZeros: audit("control-zeros"), auditSample: audit("sample"), decided: decided,
                               suppressedLowercase: supAll.filter { !isCap($0.word) }.count,
                               suppressedCapitalised: supAll.filter { isCap($0.word) }.count,
                               bySize: bySize, byCategory: byCat, comparison: cmp)
@@ -197,17 +201,25 @@ enum Report {
         print("- never produced by autocorrect: \(c.suppressedNeverAutocorrected)")
         print("- typos answered with an empty guess list: \(pct(c.suppressedEmptyListShare))")
         print("- lowercase: \(s.suppressedLowercase), capitalised: \(s.suppressedCapitalised)")
-        for (label, k, fp, sup) in [("lowercase", s.control, s.expectedFalsePositives, s.suppressedLowercase),
-                                    ("capitalised", s.controlCapitalised, s.expectedFalsePositivesCapitalised, s.suppressedCapitalised)] {
+        for (label, k) in [("lowercase", s.control), ("capitalised", s.controlCapitalised)] {
         print("\n## Control (\(label)): full 8-typo battery on \(k.wordsTested) random words\n")
         print("Hit histogram (0...8): \(k.histogram.map(String.init).joined(separator: " "))")
         for r in k.perKind {
             print("- \(r.kind): \(pct(r.rate)) recovered (95% CI \(pct(r.low))-\(pct(r.high)), n=\(r.trials))")
         }
         print("- unambiguous typos: \(pct(k.unambiguousRate.rate)) (n=\(k.unambiguousRate.trials))")
-        print(String(format: "\nFitted chance that an ordinary word misses all 8: %.2e", k.chanceAllMiss))
-        print(String(format: "Expected chance false positives: %.1f of %d suppressed", fp, sup))
         print("Control words with 0/8: \(k.controlZeros.joined(separator: ", "))")
+        }
+        for (label, a) in [("Control words that missed all eight", s.auditControlZeros),
+                           ("Random sample of the suppressed list", s.auditSample)] {
+            guard let a else { continue }
+            print("\n## Audit: \(label) (n=\(a.size))\n")
+            print("- topical: \(a.topical), lookalike: \(a.lookalike) (\(a.lookalikeWords.joined(separator: ", ")))")
+            print("- no apparent reason: \(a.none) = \(pct(a.noneRate)) (95% CI \(pct(a.noneLow))-\(pct(a.noneHigh))): \(a.noneWords.joined(separator: ", "))")
+        }
+        if let a = s.auditSample {
+            print(String(format: "Projected over %d suppressed words: %.0f with no apparent reason (95%% CI %.0f-%.0f)",
+                         c.suppressed, a.noneRate * Double(c.suppressed), a.noneLow * Double(c.suppressed), a.noneHigh * Double(c.suppressed)))
         }
         print("\n## Categories (suppressed)\n")
         for (cat, n) in s.byCategory.sorted(by: { $0.value > $1.value }) { print("- \(cat): \(n)") }

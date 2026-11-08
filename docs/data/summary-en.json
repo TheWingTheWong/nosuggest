@@ -1,0 +1,327 @@
+{
+  "auditControlZeros" : {
+    "lookalike" : 4,
+    "lookalikeWords" : [
+      "copulatives",
+      "daemons",
+      "fyke",
+      "niggles"
+    ],
+    "none" : 1,
+    "noneHigh" : 0.10304807675589372,
+    "noneLow" : 0.003469603253442241,
+    "noneRate" : 0.0196078431372549,
+    "noneWords" : [
+      "rabidness"
+    ],
+    "size" : 51,
+    "topical" : 46
+  },
+  "auditSample" : {
+    "lookalike" : 9,
+    "lookalikeWords" : [
+      "Niger",
+      "analeptics",
+      "colones",
+      "ebon",
+      "niggling",
+      "rapeseed",
+      "rectus",
+      "retarding",
+      "virginals"
+    ],
+    "none" : 7,
+    "noneHigh" : 0.07047146086668134,
+    "noneLow" : 0.017055324637357105,
+    "noneRate" : 0.035,
+    "noneWords" : [
+      "Balkan",
+      "Yaroslavl",
+      "mora",
+      "moshes",
+      "pontes",
+      "pule",
+      "spoored"
+    ],
+    "size" : 200,
+    "topical" : 184
+  },
+  "byCategory" : {
+    "death and medicine" : 152,
+    "drugs and alcohol" : 76,
+    "names and places" : 23,
+    "nazism and hate groups" : 50,
+    "other" : 39,
+    "politics" : 2,
+    "profanity and insults" : 251,
+    "race and ethnicity" : 84,
+    "religion" : 101,
+    "reproductive health" : 34,
+    "sex and the body" : 571,
+    "slurs" : 105,
+    "violence, crime and weapons" : 217
+  },
+  "bySize" : {
+    "10" : [
+      3800,
+      1
+    ],
+    "20" : [
+      6829,
+      71
+    ],
+    "35" : [
+      28088,
+      492
+    ],
+    "40" : [
+      4827,
+      232
+    ],
+    "50" : [
+      24673,
+      369
+    ],
+    "55" : [
+      5023,
+      190
+    ],
+    "60" : [
+      10083,
+      128
+    ],
+    "70" : [
+      25608,
+      222
+    ]
+  },
+  "census" : {
+    "counts" : {
+      "borderline" : 8,
+      "rejected" : 19718,
+      "related" : 187,
+      "suggested" : 107031,
+      "suppressed" : 1705,
+      "untestable" : 131
+    },
+    "suppressed" : 1705,
+    "suppressedAlsoMissingFromCompletions" : 1699,
+    "suppressedEmptyListShare" : 0.5289966923925028,
+    "suppressedNeverAutocorrected" : 1697,
+    "suppressedWithUnambiguousEvidence" : 1417,
+    "tested" : 108931
+  },
+  "comparison" : {
+    "hunspellNoSuggest" : {
+      "asshole" : "suppressed",
+      "bullshit" : "suppressed",
+      "bullshitted" : "suppressed",
+      "bullshitter" : "suppressed",
+      "bullshitting" : "suppressed",
+      "chickenshit" : "suppressed",
+      "cocksucker" : "suppressed",
+      "coon" : "borderline",
+      "cunt" : "suppressed",
+      "fuck" : "suppressed",
+      "fucker" : "suppressed",
+      "fuckhead" : "rejected",
+      "horseshit" : "suppressed",
+      "kraut" : "suppressed",
+      "motherfucker" : "suppressed",
+      "motherfucking" : "rejected",
+      "nigga" : "suppressed",
+      "niggaz" : "suppressed",
+      "nigger" : "suppressed",
+      "shit" : "suppressed",
+      "shitfaced" : "suppressed",
+      "shithead" : "suppressed",
+      "shitload" : "suppressed",
+      "shitted" : "suppressed",
+      "shitting" : "suppressed",
+      "shitty" : "suppressed",
+      "wop" : "not in lexicon"
+    },
+    "iosPhrases" : 4513,
+    "iosWords" : 1086,
+    "suppressedInIOSPhrase" : 70,
+    "suppressedNotInIOS" : 1635
+  },
+  "control" : {
+    "batterySize" : 8,
+    "controlRelated" : 3,
+    "controlZeros" : [
+      "abortions",
+      "belch",
+      "belched",
+      "blacklist",
+      "blotto",
+      "bollixes",
+      "cocks",
+      "copulatives",
+      "daemons",
+      "deathwatch",
+      "diddling",
+      "drunk",
+      "fornicating",
+      "fyke",
+      "gringo",
+      "gypper",
+      "gyppers",
+      "hearse",
+      "homicidal",
+      "humped",
+      "impalement",
+      "incubus",
+      "inseminator",
+      "knobbed",
+      "leers",
+      "lingam",
+      "lovers",
+      "molestations",
+      "murdered",
+      "niggles",
+      "nymphet",
+      "ordure",
+      "pederast",
+      "piddles",
+      "playboy",
+      "potheads",
+      "puds",
+      "rabidness",
+      "redskin",
+      "retard",
+      "shags",
+      "sicko",
+      "slays",
+      "spank",
+      "succubi",
+      "swastika",
+      "urine",
+      "vixens",
+      "wiener"
+    ],
+    "histogram" : [
+      52,
+      2,
+      6,
+      1,
+      1,
+      1,
+      3,
+      7,
+      2174
+    ],
+    "perKind" : [
+      {
+        "high" : 0.9947938513738738,
+        "hits" : 4326,
+        "kind" : "deletion",
+        "low" : 0.989652718166845,
+        "rate" : 0.9926571821936668,
+        "trials" : 4358
+      },
+      {
+        "high" : 0.9976004809311211,
+        "hits" : 4409,
+        "kind" : "transposition",
+        "low" : 0.9938570917279103,
+        "rate" : 0.9961590600994126,
+        "trials" : 4426
+      },
+      {
+        "high" : 0.9989193224280776,
+        "hits" : 4374,
+        "kind" : "substitution",
+        "low" : 0.9961017879762736,
+        "rate" : 0.997946611909651,
+        "trials" : 4383
+      },
+      {
+        "high" : 0.9975824457666539,
+        "hits" : 4376,
+        "kind" : "insertion",
+        "low" : 0.9938110126649623,
+        "rate" : 0.996130207147735,
+        "trials" : 4393
+      }
+    ],
+    "unambiguousRate" : {
+      "high" : 0.997317058828339,
+      "hits" : 12814,
+      "kind" : "unambiguous",
+      "low" : 0.9952324762965338,
+      "rate" : 0.9964230171073095,
+      "trials" : 12860
+    },
+    "wordsTested" : 2247
+  },
+  "controlCapitalised" : {
+    "batterySize" : 8,
+    "controlRelated" : 0,
+    "controlZeros" : [
+      "Australoid",
+      "Islam"
+    ],
+    "histogram" : [
+      2,
+      0,
+      1,
+      2,
+      1,
+      0,
+      2,
+      2,
+      233
+    ],
+    "perKind" : [
+      {
+        "high" : 0.9894899484050402,
+        "hits" : 443,
+        "kind" : "deletion",
+        "low" : 0.9625951618613332,
+        "rate" : 0.9800884955752213,
+        "trials" : 452
+      },
+      {
+        "high" : 0.9931611664386217,
+        "hits" : 490,
+        "kind" : "transposition",
+        "low" : 0.9712155945972027,
+        "rate" : 0.9859154929577465,
+        "trials" : 497
+      },
+      {
+        "high" : 0.9968468453103058,
+        "hits" : 490,
+        "kind" : "substitution",
+        "low" : 0.9793672758077366,
+        "rate" : 0.9919028340080972,
+        "trials" : 494
+      },
+      {
+        "high" : 0.9943182775864381,
+        "hits" : 479,
+        "kind" : "insertion",
+        "low" : 0.9732753151028912,
+        "rate" : 0.9876288659793815,
+        "trials" : 485
+      }
+    ],
+    "unambiguousRate" : {
+      "high" : 0.9910190610147552,
+      "hits" : 1083,
+      "kind" : "unambiguous",
+      "low" : 0.9764816208601396,
+      "rate" : 0.9854413102820746,
+      "trials" : 1099
+    },
+    "wordsTested" : 243
+  },
+  "decided" : 108923,
+  "generated" : "2026-11-08T10:05:43Z",
+  "language" : "en",
+  "lexiconWords" : 128780,
+  "os" : "Version 26.5.1 (Build 25F80)",
+  "suppressedCapitalised" : 115,
+  "suppressedLowercase" : 1590
+}

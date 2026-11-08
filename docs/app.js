@@ -40,19 +40,22 @@ function renderFacts(s) {
     `and ${fmt(c.suppressedAlsoMissingFromCompletions)} of them are also missing from word completion.`;
 
   const k = s.control;
+  const ordinaryRate = k.perKind.reduce((x, r) => x + r.hits, 0) / k.perKind.reduce((x, r) => x + r.trials, 0);
   $("method-text").innerHTML =
     `A spell checker misses the right word sometimes for ordinary reasons. To measure how often, the probe ran all eight typos on ` +
     `${fmt(k.wordsTested)} random lowercase words and counted how many typos brought each one back. ` +
-    `Ordinary words come back from a single typo ${pct(k.perKind.reduce((a, r) => a + r.hits, 0) / k.perKind.reduce((a, r) => a + r.trials, 0))} of the time.`;
+    `Words that come back at all come back from ${pct(ordinaryRate)} of their typos. Rerunning 400 words gave identical verdicts.`;
   $("hist-caption").textContent =
-    `Random lowercase words, by how many of their eight typos brought them back. The bar at zero is words that never came back` +
+    `${fmt(k.wordsTested)} random lowercase words, by how many of their eight typos brought them back (log scale). The bar at zero is words that never came back` +
     (k.controlRelated ? `, or came back only as another form of the word (${k.controlRelated} of these)` : "") + `.`;
+  const z = s.auditControlZeros, a = s.auditSample;
   $("fp-text").innerHTML =
-    `A beta-binomial model fitted to the words that came back at least once puts the chance that an ordinary lowercase word misses all eight at ` +
-    `${k.chanceAllMiss.toExponential(1)}. Over the whole census that is about <strong>${s.expectedFalsePositives.toFixed(1)}</strong> words ` +
-    `expected by chance, against ${fmt(s.suppressedLowercase)} observed. Capitalised words (names, places, demonyms) are noisier: ` +
-    `the same model expects ${s.expectedFalsePositivesCapitalised.toFixed(0)} chance misses among them, against ${fmt(s.suppressedCapitalised)} observed, ` +
-    `so treat individual names in the list with more caution.`;
+    `Only ${k.histogram[0]} of ${fmt(k.wordsTested)} random words missed all eight, and they are not random-looking: ` +
+    `${z ? `of the ${z.size} judged suppressed, ${z.topical} have an obvious sensitive meaning, ${z.lookalike} are spelled like one ` +
+    `(${z.lookalikeWords.map(esc).join(", ")}), and ${z.none} has no apparent reason (${z.noneWords.map(esc).join(", ")}). ` : ""}` +
+    (a ? `In a seeded random sample of ${a.size} words from the list, ${a.none} (${pct(a.noneRate)}, 95% interval ${pct(a.noneLow)} to ${pct(a.noneHigh)}) ` +
+      `have no apparent reason: ${a.noneWords.map(esc).join(", ")}. Projected over the list, that is about ${Math.round(a.noneRate * c.suppressed)} words. ` +
+      `The labels are one person's judgement and are published in the repository so you can disagree with them.` : "");
 
   const cmp = s.comparison;
   $("ios-text").innerHTML =

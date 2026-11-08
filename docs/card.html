@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nosuggest: pairs</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { background: var(--desk); }
+  .card { width: 1200px; padding: 44px 56px 40px; background: var(--paper); }
+  .card h1 { font-size: 2.6rem; margin: 0 0 0.35rem; }
+  .card .sub { font: 400 1.05rem/1.4 var(--ui); color: var(--muted); margin: 0 0 1.8rem; max-width: none; }
+  .pairs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+  .pair { display: grid; gap: 18px; align-content: start; }
+  .cell .typo { font-size: 1.5rem; }
+  .cell .menu { position: static; margin-top: 8px; min-width: 0; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <h1>Words your Mac won't suggest</h1>
+  <p class="sub">Real answers from the macOS spell checker (<span id="os"></span>) for one-letter typos. Every intended word is accepted as correctly spelled.</p>
+  <div class="pairs" id="pairs"></div>
+</div>
+<script>
+const PAIRS = [["Chrstian", "Isalm"], ["Stlin", "Hiter"], ["pistl", "bulet"], ["euthanasa", "suicde"]];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+Promise.all([fetch("data/specimens-en.json").then((r) => r.json()), fetch("data/summary-en.json").then((r) => r.json())]).then(([sp, sum]) => {
+  document.getElementById("os").textContent = "macOS " + sum.os.replace(/^Version /, "").replace(/ \(.*\)/, "");
+  const by = new Map(sp.map((s) => [s.typo, s]));
+  const cell = (t) => {
+    const s = by.get(t);
+    const ok = s.guesses.some((g) => g.toLowerCase() === s.word.toLowerCase());
+    const items = s.guesses.length
+      ? s.guesses.slice(0, 4).map((g) => `<div class="item guess${g.toLowerCase() === s.word.toLowerCase() ? " hit" : ""}">${esc(g)}</div>`).join("")
+      : `<div class="item none">No Guesses Found</div>`;
+    return `<div class="cell"><span class="typo specimen${ok ? " ok" : ""}">${esc(t)}</span>` +
+      `<div class="menu">${items}<div class="sep"></div><div class="meta">${ok ? "Suggests" : "Accepts but never suggests"} <em>${esc(s.word)}</em></div></div></div>`;
+  };
+  document.getElementById("pairs").innerHTML = PAIRS.map(([a, b]) => `<div class="pair">${cell(a)}${cell(b)}</div>`).join("");
+});
+</script>
+</body>
+</html>

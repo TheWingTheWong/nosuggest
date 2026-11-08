@@ -13,27 +13,23 @@ final class AnalysisTests: XCTestCase {
         XCTAssertEqual(c.high, 1, accuracy: 1e-12)
     }
 
-    func testBetaBinomialPMFSumsToOne() {
-        for (a, b) in [(0.5, 0.5), (2.0, 7.0), (30.0, 1.5)] {
-            let m = BetaBinomial(n: 8, alpha: a, beta: b)
-            let s = (0...8).map(m.pmf).reduce(0, +)
-            XCTAssertEqual(s, 1, accuracy: 1e-9)
-        }
-        // alpha = beta = 1 is uniform over 0...n.
-        XCTAssertEqual(BetaBinomial(n: 8, alpha: 1, beta: 1).pmf(3), 1.0 / 9, accuracy: 1e-12)
-    }
-
-    /// Property: fitting the zero-truncated histogram of a known beta-binomial
-    /// recovers its P(0), which is the quantity the census depends on.
-    func testZeroTruncatedFitRecoversHiddenZeroMass() {
-        for (a, b) in [(6.0, 1.2), (3.0, 0.8), (12.0, 2.0)] {
-            let truth = BetaBinomial(n: 8, alpha: a, beta: b)
-            // Expected histogram for 200,000 words, zero bin removed.
-            var hist = (0...8).map { Int((truth.pmf($0) * 200_000).rounded()) }
-            hist[0] = 0
-            let fit = BetaBinomial.fitZeroTruncated(hist, n: 8)
-            XCTAssertEqual(fit.pmf(0), truth.pmf(0), accuracy: max(1e-5, truth.pmf(0) * 0.05), "a=\(a) b=\(b)")
-        }
+    func testAuditCountsAndInterval() {
+        let tsv = """
+        # comment
+        rape\ttopical\t
+        rapeseed\tlookalike\tstarts with "rape"
+        moshes\tnone\t
+        murder\ttopical\t
+        bogus\tunknown-label\t
+        """
+        let a = Audit(tsv: tsv)
+        XCTAssertEqual(a.size, 4)
+        XCTAssertEqual(a.topical, 2)
+        XCTAssertEqual(a.lookalikeWords, ["rapeseed"])
+        XCTAssertEqual(a.noneWords, ["moshes"])
+        XCTAssertEqual(a.noneRate, 0.25, accuracy: 1e-12)
+        XCTAssertLessThan(a.noneLow, 0.25)
+        XCTAssertGreaterThan(a.noneHigh, 0.25)
     }
 
     func testControlSummaryOnSimulatedChecker() {
@@ -53,7 +49,6 @@ final class AnalysisTests: XCTestCase {
         let overall = s.perKind.map(\.hits).reduce(0, +)
         let trials = s.perKind.map(\.trials).reduce(0, +)
         XCTAssertEqual(Double(overall) / Double(trials), 0.75, accuracy: 0.03)
-        XCTAssertLessThan(s.chanceAllMiss, 1e-3)
     }
 
     func testCensusSummaryCounts() {

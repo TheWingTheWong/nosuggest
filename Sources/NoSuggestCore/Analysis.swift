@@ -1,79 +1,43 @@
 import Foundation
 
-/// How often does an ordinary word fail to come back from all of its typos by
-/// chance? The control sample answers this without assuming anything about
-/// which words are "sensitive":
-///
-/// 1. Take the hit counts (out of n typos) of control words that came back at
-///    least once. Those words are certainly not suppressed.
-/// 2. Fit a beta-binomial to that zero-truncated histogram. The beta part
-///    absorbs the fact that some words are harder to recover than others.
-/// 3. The fitted P(0 hits) is the chance that an ordinary word looks
-///    suppressed. Multiply by the number of words tested to get the expected
-///    number of false positives in the census.
-///
-/// The extrapolation to zero is a model, so the histogram itself is reported
-/// too: if chance zeros were common, one-hit words would be common as well.
-public struct BetaBinomial: Equatable, Sendable {
-    public let n: Int
-    public let alpha: Double
-    public let beta: Double
+/// Hand labels for a sample of words, read from a TSV of
+/// `word<TAB>label<TAB>note` lines. Labels are "topical", "lookalike" and
+/// "none"; see data/<version>/audit-*.tsv for what each means.
+public struct Audit: Codable, Sendable {
+    public let size: Int
+    public let topical: Int
+    public let lookalike: Int
+    public let none: Int
+    /// Share of sampled words with no apparent reason, with a 95% Wilson interval.
+    public let noneRate: Double
+    public let noneLow: Double
+    public let noneHigh: Double
+    public let noneWords: [String]
+    public let lookalikeWords: [String]
 
-    public init(n: Int, alpha: Double, beta: Double) {
-        self.n = n
-        self.alpha = alpha
-        self.beta = beta
-    }
-
-    static func logBeta(_ a: Double, _ b: Double) -> Double { lgamma(a) + lgamma(b) - lgamma(a + b) }
-    static func logChoose(_ n: Int, _ k: Int) -> Double {
-        lgamma(Double(n + 1)) - lgamma(Double(k + 1)) - lgamma(Double(n - k + 1))
-    }
-
-    public func logPMF(_ k: Int) -> Double {
-        Self.logChoose(n, k) + Self.logBeta(Double(k) + alpha, Double(n - k) + beta) - Self.logBeta(alpha, beta)
-    }
-
-    public func pmf(_ k: Int) -> Double { exp(logPMF(k)) }
-
-    /// Log-likelihood of a histogram (index = hit count) with the zero bin
-    /// excluded and the rest renormalised.
-    public func zeroTruncatedLogLikelihood(_ histogram: [Int]) -> Double {
-        let logNotZero = log1p(-pmf(0))
-        var ll = 0.0
-        for k in 1...n where k < histogram.count && histogram[k] > 0 {
-            ll += Double(histogram[k]) * (logPMF(k) - logNotZero)
-        }
-        return ll
-    }
-
-    /// Maximum-likelihood fit to a zero-truncated histogram, by a coarse
-    /// log-spaced grid followed by coordinate refinement. Two parameters and
-    /// a smooth surface make this reliable without an optimisation library.
-    public static func fitZeroTruncated(_ histogram: [Int], n: Int) -> BetaBinomial {
-        var best = BetaBinomial(n: n, alpha: 1, beta: 1)
-        var bestLL = -Double.infinity
-        let grid = stride(from: -3.0, through: 4.0, by: 0.25).map { pow(10, $0 / 2) }
-        for a in grid {
-            for b in grid {
-                let m = BetaBinomial(n: n, alpha: a, beta: b)
-                let ll = m.zeroTruncatedLogLikelihood(histogram)
-                if ll > bestLL { bestLL = ll; best = m }
+    public init(tsv: String) {
+        var t = 0, l = 0, n = 0
+        var noneWords: [String] = [], lookWords: [String] = []
+        for line in tsv.split(whereSeparator: \.isNewline) where !line.hasPrefix("#") {
+            let f = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+            guard f.count >= 2 else { continue }
+            switch f[1] {
+            case "topical": t += 1
+            case "lookalike": l += 1; lookWords.append(f[0])
+            case "none": n += 1; noneWords.append(f[0])
+            default: continue
             }
         }
-        var step = 0.5
-        for _ in 0..<60 {
-            var improved = false
-            for (da, db) in [(step, 0.0), (-step, 0.0), (0.0, step), (0.0, -step)] {
-                let a = best.alpha * exp(da), b = best.beta * exp(db)
-                let m = BetaBinomial(n: n, alpha: a, beta: b)
-                let ll = m.zeroTruncatedLogLikelihood(histogram)
-                if ll > bestLL + 1e-12 { bestLL = ll; best = m; improved = true }
-            }
-            if !improved { step /= 2 }
-            if step < 1e-6 { break }
-        }
-        return best
+        size = t + l + n
+        topical = t
+        lookalike = l
+        none = n
+        let ci = Stats.wilson(successes: n, trials: size)
+        noneRate = size == 0 ? 0 : Double(n) / Double(size)
+        noneLow = ci.low
+        noneHigh = ci.high
+        self.noneWords = noneWords
+        lookalikeWords = lookWords
     }
 }
 
@@ -97,11 +61,6 @@ public struct ControlSummary: Codable, Sendable {
     public let perKind: [KindRate]
     /// Same, restricted to unambiguous typos.
     public let unambiguousRate: KindRate
-    public let fitAlpha: Double
-    public let fitBeta: Double
-    /// Fitted probability that a word which is *not* suppressed misses on
-    /// every typo of a full battery.
-    public let chanceAllMiss: Double
     /// Control words judged suppressed (zero hits, no related form offered).
     public let controlZeros: [String]
     /// Control words with zero exact hits where a related form was offered.
@@ -127,11 +86,6 @@ public struct ControlSummary: Codable, Sendable {
         let allTrials = recovered.flatMap(\.trials)
         perKind = TypoKind.allCases.map { k in rate(k.rawValue, allTrials.filter { $0.kind == k }) }
         unambiguousRate = rate("unambiguous", allTrials.filter(\.unambiguous))
-
-        let fit = BetaBinomial.fitZeroTruncated(hist, n: batterySize)
-        fitAlpha = fit.alpha
-        fitBeta = fit.beta
-        chanceAllMiss = fit.pmf(0)
     }
 }
 
