@@ -41,7 +41,7 @@ enum Report {
         let verifyTypos: Int
         /// Typos tried in stage 1.
         let probeTypos: Int
-        /// Words stage 1 flagged that stage 2 cleared: [word, typo that brought it back].
+        /// Words stage 1 flagged that stage 2 cleared: [word, how, evidence].
         let cleared: [[String]]
         /// Control for lowercase words and for capitalised words (names,
         /// places, demonyms), which the checker treats differently.
@@ -155,8 +155,15 @@ enum Report {
 
         let census = CensusSummary(results: results)
         let final = CensusSummary(results: verify)
+        // [word, how it was cleared, evidence]: "typo" (the typo that brought
+        // it back), "related" (a typo that brought back another form), or
+        // "autocorrect" / "completion".
         let cleared: [[String]] = verify.filter { $0.verdict != .suppressed }.map { r in
-            [r.word, r.trials.first(where: \.hit)?.typo ?? r.trials.first(where: \.related)?.typo ?? ""]
+            if let t = r.trials.first(where: \.hit) { return [r.word, "typo", t.typo] }
+            if r.correctionHit == true { return [r.word, "autocorrect", ""] }
+            if r.completionHit == true { return [r.word, "completion", ""] }
+            let t = r.trials.first(where: \.related)
+            return [r.word, "related", t.map { "\($0.typo) -> \($0.guesses.first { Inflection.related($0, r.word) } ?? "")" } ?? ""]
         }.sorted { $0[0].lowercased() < $1[0].lowercased() }
         func isCap(_ w: String) -> Bool { w.first?.isUppercase ?? false }
         let ctl = ControlSummary(results: control.filter { !isCap($0.word) }, batterySize: 8)
@@ -232,7 +239,7 @@ enum Report {
         }
         print("\nStage 2, every keyboard-plausible typo of the \(c.suppressed) flagged words (\(s.verifyTypos) typos):\n")
         for k in ["suppressed", "suggested", "related", "borderline"] { print("- \(k): \(f.counts[k] ?? 0)") }
-        print("- cleared: \(s.cleared.map { "\($0[0]) (\($0[1]))" }.joined(separator: ", "))")
+        print("- cleared: \(s.cleared.map { "\($0[0]) (\($0[1]) \($0[2]))" }.joined(separator: ", "))")
         print("\nFinal list: \(f.suppressed) words")
         print("- with >= 2 misses on unambiguous typos: \(f.suppressedWithUnambiguousEvidence)")
         print("- also absent from prefix completions: \(f.suppressedAlsoMissingFromCompletions)")
@@ -249,6 +256,7 @@ enum Report {
             }
             print("- unambiguous typos: \(pct(k.unambiguousRate.rate)) (n=\(k.unambiguousRate.trials))")
             print("- all four kinds together: \(pct(Double(hits) / Double(max(all, 1))))")
+            print("- over every typo of every control word, including words that never came back: \(pct(k.overallRate))")
             print("Control words flagged in stage 1: \(k.controlZeros.joined(separator: ", "))")
         }
         for (label, a) in [("Control words flagged in stage 1", s.auditControlZeros),
@@ -314,7 +322,15 @@ enum ReadmeCheck {
         ]
         if let a = s.auditSample {
             expected.append(("audit none rate", Report.pct(a.noneRate)))
+            expected.append(("audit topical share", String(format: "%.0f%%", 100 * Double(a.topical) / Double(max(a.size, 1)))))
         }
+        if let b = s.auditBaseRate {
+            expected.append(("base-rate topical share", String(format: "%.0f%%", 100 * Double(b.topical) / Double(max(b.size, 1)))))
+        }
+        expected.append(("unambiguous evidence", grouped(s.final.suppressedWithUnambiguousEvidence)))
+        expected.append(("never autocorrected", grouped(s.final.suppressedNeverAutocorrected)))
+        expected.append(("control overall per-typo rate", Report.pct(s.control.overallRate)))
+        for (label, n) in s.byCategory { expected.append(("category \(label)", "| \(label) | \(n) |")) }
         var missing = 0
         for (label, value) in expected {
             let ok = readme.contains(value)

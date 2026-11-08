@@ -41,8 +41,9 @@ function renderFacts(s) {
     `and ${fmt(f.suppressedAlsoMissingFromCompletions)} of the words are also missing from word completion.`;
   $("list-text").innerHTML =
     `Every word here passes the spell check when typed correctly. A first pass tried eight typos on each of ${fmt(c.tested)} words and flagged ${fmt(c.suppressed)}; ` +
-    `a second pass tried every keyboard-plausible typo on those, ${fmt(s.verifyTypos)} in all, and cleared ${fmt(s.cleared.length)} where some typo brought back the word or another form of it ` +
-    `(${["terrorism", "Zionism", "killer", "Hallie", "analeptics"].map((w) => s.cleared.find((x) => x[0] === w)).filter(Boolean).slice(0, 5).map((x) => `<em>${esc(x[0])}</em> from <em>${esc(x[1])}</em>`).join(", ")}). ` +
+    `a second pass tried every keyboard-plausible typo on those, ${fmt(s.verifyTypos)} in all, and cleared ${fmt(s.cleared.length)}: ` +
+    `${s.cleared.filter((x) => x[1] === "typo").length} came back from some typo (${s.cleared.filter((x) => x[1] === "typo").slice(0, 4).map((x) => `<em>${esc(x[0])}</em> from <em>${esc(x[2])}</em>`).join(", ")}), ` +
+    `${s.cleared.filter((x) => x[1] === "related").length} came back only as another form, and ${s.cleared.filter((x) => x[1] === "autocorrect" || x[1] === "completion").length} through autocorrect. ` +
     `Words where the checker offered a different form of the same word instead (<em>Boston's</em> for <em>Bostns</em>) are not counted. ` +
     `The categories are editorial, assigned by hand-written rules in <a href="https://github.com/TheWingTheWong/nosuggest/blob/main/data/categories.tsv"><code>data/categories.tsv</code></a>.`;
 
@@ -50,7 +51,8 @@ function renderFacts(s) {
   const all = k.perKind.reduce((x, r) => x + r.trials, 0), hits = k.perKind.reduce((x, r) => x + r.hits, 0);
   $("method-text").innerHTML =
     `A spell checker misses the right word sometimes for ordinary reasons. To see how often, eight typos were tried, with no early stop, on ` +
-    `${fmt(k.wordsTested)} random lowercase words that macOS accepts. Words that came back at all came back from ${pct(hits / all)} of their typos.`;
+    `${fmt(k.wordsTested)} random lowercase words that macOS accepts. ${pct(k.overallRate)} of all their typos brought the word back; ` +
+    `among words that came back at all, ${pct(hits / all)} did.`;
   $("hist-caption").textContent =
     `${fmt(k.wordsTested)} random lowercase words, by how many of their eight typos brought them back (log scale). The bar at zero is words that never came back` +
     (k.controlRelated ? `, or came back only as another form of the word (${k.controlRelated} of these)` : "") + `.`;
@@ -77,7 +79,7 @@ function renderFacts(s) {
   $("hunspell-text").innerHTML =
     `Open-source spell checkers do something similar, in the open. The Hunspell <code>en_US</code> dictionary used by LibreOffice marks ` +
     `${hun.length} entries <code>NOSUGGEST</code>, all of them profanity or slurs. macOS suppresses ${count("suppressed")} of them` +
-    (hunSug.length ? ` and still suggests ${hunSug.length} (${hunSug.map(esc).join(", ")})` : ", suggests none of them") +
+    (hunSug.length ? ` and still suggests ${hunSug.length} (${hunSug.map(esc).join(", ")})` : "; it suggests none of them") +
     `. The difference is scope: Hunspell's list is ${hun.length} lines anyone can read; the Mac's covers medicine, religion, crime and history, and is not published.`;
 }
 
@@ -163,7 +165,16 @@ function renderRows() {
 
 $("rows").addEventListener("click", (e) => { if (e.target.classList.contains("blur")) e.target.classList.remove("blur"); });
 $("more").addEventListener("click", () => { state.shown += PAGE * 4; renderRows(); });
-$("q").addEventListener("input", (e) => { state.q = e.target.value; state.shown = PAGE; applyFilter(); });
+$("q").addEventListener("input", (e) => {
+  state.q = e.target.value;
+  state.shown = PAGE;
+  // A search looks through every category.
+  if (state.q && state.cat !== "all") {
+    state.cat = "all";
+    document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x.dataset.cat === "all"));
+  }
+  applyFilter();
+});
 $("show-slurs").addEventListener("change", (e) => { state.showSlurs = e.target.checked; renderRows(); });
 
 const LANG_NAMES = { en: "English", de: "German", fr: "French", es: "Spanish", it: "Italian", pt_BR: "Portuguese", nl: "Dutch" };

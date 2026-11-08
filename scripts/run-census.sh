@@ -2,9 +2,9 @@
 # Full census on this Mac, in three steps:
 #   1. every SCOWL word (size <= 70) through an eight-typo battery;
 #   2. every word flagged in step 1 through its whole keyboard neighbourhood
-#      (about 60 typos each); only words that survive are reported;
+#      (about 90 typos each); only words that survive are reported;
 #   3. a full-battery control sample of random words.
-# Takes about 35 minutes; the spell server is the bottleneck.
+# Takes about 45 minutes; the spell server is the bottleneck.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 JOBS="${JOBS:-4}"

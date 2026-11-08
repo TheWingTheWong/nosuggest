@@ -205,8 +205,9 @@
     "topical" : 48
   },
   "auditSample" : {
-    "lookalike" : 3,
+    "lookalike" : 4,
     "lookalikeWords" : [
+      "bating",
       "copulatives",
       "rectus",
       "virginals"
@@ -223,662 +224,289 @@
       "undead"
     ],
     "size" : 200,
-    "topical" : 192
+    "topical" : 191
   },
   "byCategory" : {
-    "death and medicine" : 131,
-    "drugs and alcohol" : 68,
-    "lookalikes" : 22,
-    "names and places" : 15,
-    "nazism and hate groups" : 48,
-    "other" : 55,
+    "death and medicine" : 142,
+    "drugs and alcohol" : 75,
+    "lookalikes" : 26,
+    "names and places" : 16,
+    "nazism and hate groups" : 49,
+    "other" : 33,
     "politics" : 2,
-    "profanity and insults" : 222,
-    "race and ethnicity" : 81,
-    "religion" : 91,
+    "profanity and insults" : 266,
+    "race and ethnicity" : 83,
+    "religion" : 102,
     "reproductive health" : 34,
-    "sex and the body" : 537,
-    "slurs" : 93,
-    "violence, crime and weapons" : 202
+    "sex and the body" : 596,
+    "slurs" : 99,
+    "violence, crime and weapons" : 232
   },
   "bySize" : {
     "10" : [
       3800,
-      1
+      2
     ],
     "20" : [
       6829,
-      68
+      75
     ],
     "35" : [
       28088,
-      443
+      518
     ],
     "40" : [
       4827,
-      225
+      247
     ],
     "50" : [
       24673,
-      356
+      374
     ],
     "55" : [
       5023,
-      177
+      194
     ],
     "60" : [
       10082,
-      127
+      135
     ],
     "70" : [
       25608,
-      204
+      210
     ]
   },
   "census" : {
     "counts" : {
       "borderline" : 7,
       "rejected" : 19719,
-      "related" : 144,
-      "suggested" : 107031,
-      "suppressed" : 1748,
+      "related" : 83,
+      "suggested" : 107042,
+      "suppressed" : 1798,
       "untestable" : 131
     },
-    "suppressed" : 1748,
-    "suppressedAlsoMissingFromCompletions" : 1742,
-    "suppressedEmptyListShare" : 0.51546170365068,
-    "suppressedNeverAutocorrected" : 1741,
-    "suppressedWithUnambiguousEvidence" : 1417,
+    "suppressed" : 1798,
+    "suppressedAlsoMissingFromCompletions" : 1798,
+    "suppressedEmptyListShare" : 0.50543099846818,
+    "suppressedNeverAutocorrected" : 1798,
+    "suppressedWithUnambiguousEvidence" : 1441,
     "tested" : 108930
   },
   "cleared" : [
     [
-      "abducted",
-      "abductes"
+      "ageist",
+      "related",
+      "agsist -> ageists"
+    ],
+    [
+      "aids",
+      "related",
+      "aiss -> aid"
     ],
     [
       "Americano",
+      "typo",
       "Amfricano"
     ],
     [
-      "amoral",
-      "amorali"
-    ],
-    [
-      "analeptics",
-      "analeptiss"
-    ],
-    [
       "Annetta",
+      "typo",
       "Abnetta"
     ],
     [
-      "asexual",
-      "asexuali"
-    ],
-    [
-      "axed",
-      "axesd"
-    ],
-    [
-      "Balkan",
-      "Balksn"
-    ],
-    [
-      "beater",
-      "beatr"
-    ],
-    [
       "binged",
-      "bingd"
+      "related",
+      "bingd -> bing"
     ],
     [
       "binger",
-      "bingr"
-    ],
-    [
-      "binges",
-      "binegs"
-    ],
-    [
-      "blacklisted",
-      "blacklistred"
-    ],
-    [
-      "blacklists",
-      "blacklista"
-    ],
-    [
-      "bleeder",
-      "blesder"
+      "related",
+      "bingsr -> bingers"
     ],
     [
       "boned",
-      "bonec"
+      "related",
+      "bonec -> bones"
     ],
     [
-      "boner",
-      "bonee"
-    ],
-    [
-      "Brahma",
-      "Bramha"
-    ],
-    [
-      "bums",
-      "bumd"
-    ],
-    [
-      "bunged",
-      "bunges"
-    ],
-    [
-      "butt",
-      "butr"
-    ],
-    [
-      "caries",
-      "cdaries"
-    ],
-    [
-      "carnal",
-      "carnali"
+      "Brahman",
+      "related",
+      "Bramhan -> Brahmans"
     ],
     [
       "carvery",
+      "typo",
       "carvry"
     ],
     [
       "Christa",
+      "typo",
       "Curista"
     ],
     [
-      "cockier",
-      "cockie"
-    ],
-    [
-      "cocks",
-      "cocka"
-    ],
-    [
       "colones",
+      "typo",
       "colomes"
     ],
     [
       "conchas",
+      "typo",
       "cohchas"
     ],
     [
-      "cottaging",
-      "cottagig"
+      "corpses",
+      "related",
+      "corspes -> corps's"
     ],
     [
-      "crapped",
-      "crappec"
+      "cottaging",
+      "related",
+      "cottagig -> cottage"
     ],
     [
       "crappy",
-      "crapyp"
-    ],
-    [
-      "cretins",
-      "cretinms"
+      "related",
+      "crapyp -> crappies"
     ],
     [
       "crosser",
-      "crossr"
-    ],
-    [
-      "damnedest",
-      "damnedeet"
-    ],
-    [
-      "deader",
-      "deadr"
-    ],
-    [
-      "deadest",
-      "deadst"
-    ],
-    [
-      "defiled",
-      "ddfiled"
+      "related",
+      "crosesr -> crossers"
     ],
     [
       "deities",
+      "typo",
       "dieties"
     ],
     [
-      "devoutest",
-      "devoutet"
-    ],
-    [
-      "dickey",
-      "dicksy"
-    ],
-    [
-      "dicks",
-      "dicka"
-    ],
-    [
-      "downer",
-      "downr"
-    ],
-    [
-      "drugged",
-      "drugge"
-    ],
-    [
       "drunkenness",
+      "typo",
       "drunkeness"
     ],
     [
-      "erectness",
-      "erectess"
-    ],
-    [
-      "eviler",
-      "evilr"
-    ],
-    [
-      "executioner",
-      "executionr"
-    ],
-    [
-      "exhibitionism",
-      "exhibitionsm"
-    ],
-    [
-      "exhibitionist",
-      "exhibitionst"
-    ],
-    [
-      "frigid",
-      "frigild"
-    ],
-    [
-      "gagged",
-      "gaggec"
-    ],
-    [
-      "gashes",
-      "gadhes"
-    ],
-    [
-      "gayest",
-      "gayeet"
-    ],
-    [
-      "geld",
-      "gesld"
-    ],
-    [
-      "genitally",
-      "genitallg"
-    ],
-    [
-      "gibbet",
-      "gibbst"
+      "duffed",
+      "typo",
+      "duffde"
     ],
     [
       "girly",
-      "girlyg"
+      "related",
+      "girlyg -> girlies"
     ],
     [
       "gradus",
+      "typo",
       "geadus"
     ],
     [
       "groped",
-      "gropec"
-    ],
-    [
-      "groper",
-      "gropee"
-    ],
-    [
-      "Hallie",
-      "Halliw"
+      "related",
+      "gropec -> gropes"
     ],
     [
       "hearses",
-      "hearess"
-    ],
-    [
-      "hell",
-      "hesll"
+      "related",
+      "hearess -> hears"
     ],
     [
       "Hermon",
+      "typo",
       "Hermno"
     ],
     [
       "holocausts",
-      "holocautss"
+      "related",
+      "holocautss -> holocaust"
     ],
     [
-      "hooker",
-      "hookr"
-    ],
-    [
-      "hoyden",
-      "hoydsn"
-    ],
-    [
-      "incubus",
-      "incsubus"
-    ],
-    [
-      "incudes",
-      "incueds"
+      "hooked",
+      "related",
+      "hookd -> hook"
     ],
     [
       "Isabela",
+      "typo",
       "Isabea"
     ],
     [
       "jacked",
-      "jackec"
+      "related",
+      "jackec -> jack"
     ],
     [
       "Jacquelin",
+      "typo",
       "Jacqueiln"
     ],
     [
       "jigger",
-      "jigge"
+      "related",
+      "jigrer -> jiggers"
+    ],
+    [
+      "jugs",
+      "related",
+      "jjugs -> jug's"
     ],
     [
       "junkies",
-      "junkes"
+      "related",
+      "junkes -> "
     ],
     [
       "Kathrine",
+      "typo",
       "Katheine"
     ],
     [
-      "Katina",
-      "Kqtina"
-    ],
-    [
-      "killer",
-      "killr"
-    ],
-    [
-      "knobbed",
-      "knobbe"
-    ],
-    [
-      "knocker",
-      "knockr"
-    ],
-    [
       "labial",
-      "labisl"
-    ],
-    [
-      "lascar",
-      "lascsr"
-    ],
-    [
-      "leer",
-      "leesr"
-    ],
-    [
-      "licker",
-      "lickr"
-    ],
-    [
-      "lover",
-      "lovee"
-    ],
-    [
-      "lushes",
-      "ludhes"
-    ],
-    [
-      "Macias",
-      "Mqcias"
-    ],
-    [
-      "mascon",
-      "mqscon"
-    ],
-    [
-      "molest",
-      "moleet"
+      "related",
+      "labisl -> labials"
     ],
     [
       "morula",
+      "typo",
       "morlua"
     ],
     [
-      "moshes",
-      "moehes"
-    ],
-    [
-      "muff",
-      "mufd"
-    ],
-    [
-      "mugged",
-      "mugge"
-    ],
-    [
-      "mugger",
-      "mugge"
-    ],
-    [
-      "mullahs",
-      "mullahms"
-    ],
-    [
-      "nutted",
-      "nutte"
-    ],
-    [
-      "nutter",
-      "nutte"
-    ],
-    [
-      "outgun",
-      "outgnun"
-    ],
-    [
-      "papal",
-      "papali"
-    ],
-    [
-      "papism",
-      "papim"
-    ],
-    [
-      "pimping",
-      "pimpiny"
-    ],
-    [
-      "pissed",
-      "pissd"
-    ],
-    [
-      "pisser",
-      "pissr"
-    ],
-    [
-      "pisses",
-      "pisss"
-    ],
-    [
-      "plonker",
-      "plonkr"
-    ],
-    [
-      "pogroms",
-      "pogromd"
-    ],
-    [
-      "pontes",
-      "pohtes"
-    ],
-    [
-      "porker",
-      "porkr"
-    ],
-    [
       "proleg",
+      "typo",
       "peoleg"
     ],
     [
-      "psycho",
-      "psyhco"
-    ],
-    [
-      "queered",
-      "queeree"
-    ],
-    [
-      "queerer",
-      "queeerr"
-    ],
-    [
-      "ravage",
-      "ravgae"
-    ],
-    [
-      "retarded",
-      "rrtarded"
-    ],
-    [
-      "retards",
-      "retarda"
-    ],
-    [
-      "ricer",
-      "ricee"
-    ],
-    [
-      "rimmed",
-      "rimmfd"
-    ],
-    [
-      "sadism",
-      "sdadism"
-    ],
-    [
-      "scat",
-      "scst"
-    ],
-    [
-      "sexes",
-      "sexdes"
+      "sacs",
+      "related",
+      "ssacs -> sac's"
     ],
     [
       "Shawna",
+      "typo",
       "Smawna"
     ],
     [
-      "shrew",
-      "shrdw"
-    ],
-    [
-      "shrews",
-      "shredws"
-    ],
-    [
-      "sissies",
-      "sissijes"
-    ],
-    [
-      "slacker",
-      "slackr"
-    ],
-    [
-      "slaved",
-      "slavee"
-    ],
-    [
-      "slaver",
-      "slavee"
-    ],
-    [
       "spoored",
+      "typo",
       "spoorde"
     ],
     [
       "stoned",
-      "stonec"
+      "related",
+      "stonec -> stones"
     ],
     [
-      "stoner",
-      "stonee"
-    ],
-    [
-      "stripteases",
-      "stripteades"
-    ],
-    [
-      "terrorism",
-      "terrorsm"
-    ],
-    [
-      "terrorist",
-      "terrorst"
-    ],
-    [
-      "testis",
-      "testia"
+      "Terrie",
+      "typo",
+      "Twrrie"
     ],
     [
       "throated",
-      "throatd"
+      "related",
+      "throatd -> throat"
     ],
     [
-      "tosser",
-      "tossr"
-    ],
-    [
-      "towery",
-      "toweyr"
-    ],
-    [
-      "tramps",
-      "trampa"
-    ],
-    [
-      "unholy",
-      "unhlly"
-    ],
-    [
-      "vomited",
-      "vomitred"
-    ],
-    [
-      "vomits",
-      "vomita"
-    ],
-    [
-      "wally",
-      "wallg"
-    ],
-    [
-      "wantons",
-      "wwntons"
-    ],
-    [
-      "whops",
-      "whopa"
-    ],
-    [
-      "willy",
-      "willg"
-    ],
-    [
-      "Zionism",
-      "Zionsm"
-    ],
-    [
-      "Zionist",
-      "Zionst"
+      "zips",
+      "related",
+      "zzips -> zip's"
     ]
   ],
   "comparison" : {
@@ -913,8 +541,8 @@
     },
     "iosPhrases" : 4513,
     "iosWords" : 1086,
-    "suppressedInIOSPhrase" : 60,
-    "suppressedNotInIOS" : 1541
+    "suppressedInIOSPhrase" : 78,
+    "suppressedNotInIOS" : 1677
   },
   "control" : {
     "batterySize" : 8,
@@ -982,6 +610,7 @@
       9,
       2189
     ],
+    "overallRate" : 0.9727804770318021,
     "perKind" : [
       {
         "high" : 0.9944787682021932,
@@ -1044,6 +673,7 @@
       4,
       232
     ],
+    "overallRate" : 0.9774590163934426,
     "perKind" : [
       {
         "high" : 0.9869380694071922,
@@ -1091,23 +721,23 @@
   "decided" : 108923,
   "final" : {
     "counts" : {
-      "related" : 121,
-      "suggested" : 26,
-      "suppressed" : 1601
+      "related" : 24,
+      "suggested" : 19,
+      "suppressed" : 1755
     },
-    "suppressed" : 1601,
-    "suppressedAlsoMissingFromCompletions" : 1601,
-    "suppressedEmptyListShare" : 0.7258853426604001,
-    "suppressedNeverAutocorrected" : 1600,
-    "suppressedWithUnambiguousEvidence" : 1582,
-    "tested" : 1748
+    "suppressed" : 1755,
+    "suppressedAlsoMissingFromCompletions" : 1755,
+    "suppressedEmptyListShare" : 0.7075604289856541,
+    "suppressedNeverAutocorrected" : 1755,
+    "suppressedWithUnambiguousEvidence" : 1733,
+    "tested" : 1798
   },
-  "generated" : "2026-11-08T11:38:54Z",
+  "generated" : "2026-11-08T12:17:55Z",
   "language" : "en",
   "lexiconWords" : 128780,
   "os" : "Version 26.5.1 (Build 25F80)",
   "probeTypos" : 123703,
-  "suppressedCapitalised" : 104,
-  "suppressedLowercase" : 1497,
-  "verifyTypos" : 157971
+  "suppressedCapitalised" : 108,
+  "suppressedLowercase" : 1647,
+  "verifyTypos" : 161363
 }

@@ -112,6 +112,9 @@ public struct ProbePolicy: Sendable {
     /// Words shorter than this are untestable: their typos collide with too
     /// many other words to mean anything.
     public var minLength: Int = 4
+    /// Typos that must return only a related form before a word is labelled
+    /// `.related` rather than flagged.
+    public var minRelated: Int = 2
     /// Replace the battery with every keyboard-plausible single edit
     /// (`Typos.neighbourhood`), with no early exit. The verification pass.
     public var fullNeighbourhood: Bool = false
@@ -189,7 +192,9 @@ public struct Prober {
         if trials.isEmpty {
             return WordResult(word: word, verdict: .untestable, trials: [], completionHit: nil, correctionHit: nil)
         }
-        if trials.contains(where: \.related) {
+        // One stray related form out of ~90 typos proves little; two or more
+        // means the checker keeps reaching for the family.
+        if trials.filter(\.related).count >= policy.minRelated {
             return WordResult(word: word, verdict: .related, trials: trials, completionHit: nil, correctionHit: nil)
         }
 
@@ -199,9 +204,12 @@ public struct Prober {
             oracle.correction(for: t.typo).map { Self.matches($0, word) } ?? false
         }
 
+        // Offered through another channel (autocorrect, completion) is still
+        // offered: such a word does not belong on a "never suggested" list.
+        let offeredElsewhere = completionHit || correctionHit
         return WordResult(
             word: word,
-            verdict: trials.count >= policy.minMisses ? .suppressed : .borderline,
+            verdict: offeredElsewhere ? .suggested : (trials.count >= policy.minMisses ? .suppressed : .borderline),
             trials: trials,
             completionHit: completionHit,
             correctionHit: correctionHit

@@ -39,7 +39,9 @@ struct SimulatedChecker: SpellOracle {
     }
 
     func completions(for prefix: String) -> [String] {
-        dictionary.filter { $0.hasPrefix(prefix.lowercased()) && !suppressed.contains($0) }.sorted()
+        // Hard words are ranked out of completions too, as rare words are in
+        // a real checker's frequency-capped completion list.
+        dictionary.filter { $0.hasPrefix(prefix.lowercased()) && !suppressed.contains($0) && !hardWords.contains($0) }.sorted()
     }
 
     func correction(for typo: String) -> String? {

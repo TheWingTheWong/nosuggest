@@ -3,9 +3,9 @@ import XCTest
 
 final class InflectionTests: XCTestCase {
     func testRelatedForms() {
-        for (a, b) in [("Bostons", "Boston's"), ("actins", "actin's"), ("bared", "bare"), ("barer", "bare"),
-                       ("barred", "bar"), ("marks", "Mark"), ("abuses", "abuse"), ("parties", "party"),
-                       ("hoping", "hope"), ("quickly", "quick")] {
+        for (a, b) in [("Bostons", "Boston's"), ("actins", "actin's"), ("bared", "bare"), ("marks", "Mark"),
+                       ("abuses", "abuse"), ("parties", "party"), ("hoping", "hope"), ("boxes", "box"),
+                       ("suicided", "suicide"), ("churches", "church's")] {
             XCTAssertTrue(Inflection.related(a, b), "\(a) ~ \(b)")
             XCTAssertTrue(Inflection.related(b, a), "\(b) ~ \(a)")
         }
@@ -20,5 +20,17 @@ final class InflectionTests: XCTestCase {
             XCTAssertFalse(Inflection.related(a, b), "\(a) !~ \(b)")
         }
         XCTAssertFalse(Inflection.related("same", "Same"))
+    }
+
+    /// Pairs the real checker produced that a looser stemmer (consonant
+    /// undoubling, derivational suffixes, -es after any letter) wrongly
+    /// called related, clearing suppressed words.
+    func testFalseFamiliesFromRealData() {
+        for (a, b) in [("raped", "rapped"), ("rapist", "rap's"), ("sadism", "saddest"), ("pissed", "PIs"),
+                       ("molest", "moles"), ("tits", "titter"), ("slaves", "Slavs"), ("spics", "spices"),
+                       ("retarded", "retarder"), ("executioner", "execution's"), ("terrorism", "terror's"),
+                       ("barer", "bare"), ("quickly", "quick")] {
+            XCTAssertFalse(Inflection.related(a, b), "\(a) !~ \(b)")
+        }
     }
 }

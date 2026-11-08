@@ -61,6 +61,9 @@ public struct ControlSummary: Codable, Sendable {
     public let perKind: [KindRate]
     /// Same, restricted to unambiguous typos.
     public let unambiguousRate: KindRate
+    /// Share of all typos, of all control words (including those that never
+    /// came back), that brought the word back.
+    public let overallRate: Double
     /// Control words judged suppressed (zero hits, no related form offered).
     public let controlZeros: [String]
     /// Control words with zero exact hits where a related form was offered.
@@ -86,6 +89,8 @@ public struct ControlSummary: Codable, Sendable {
         let allTrials = recovered.flatMap(\.trials)
         perKind = TypoKind.allCases.map { k in rate(k.rawValue, allTrials.filter { $0.kind == k }) }
         unambiguousRate = rate("unambiguous", allTrials.filter(\.unambiguous))
+        let every = full.flatMap(\.trials)
+        overallRate = every.isEmpty ? 0 : Double(every.filter(\.hit).count) / Double(every.count)
     }
 }
 

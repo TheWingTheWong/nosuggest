@@ -17,7 +17,7 @@ final class ProberTests: XCTestCase {
         for w in dict {
             let r = prober.probe(w)
             XCTAssertNotEqual(r.verdict, .rejected)
-            if [.suppressed, .borderline, .related].contains(r.verdict) { found.insert(w) }
+            if r.verdict == .suppressed || r.verdict == .borderline { found.insert(w) }
             if r.verdict == .suggested { XCTAssertFalse(sup.contains(w), w) }
         }
         XCTAssertEqual(found, sup)
@@ -37,7 +37,7 @@ final class ProberTests: XCTestCase {
                 let r = prober.probe(w)
                 if sup.contains(w) {
                     planted += 1
-                    if [.suppressed, .borderline, .related].contains(r.verdict) { recalled += 1 }
+                    if r.verdict == .suppressed || r.verdict == .borderline { recalled += 1 }
                 } else if r.verdict != .untestable {
                     ordinary += 1
                     if r.verdict == .suppressed { falsePositives += 1 }
@@ -160,6 +160,19 @@ final class ProberTests: XCTestCase {
         XCTAssertFalse(Prober.isRelatedStandIn("suicided", for: "suicide", typo: "suicied"))
         XCTAssertTrue(Prober.isRelatedStandIn("Boston's", for: "Bostons", typo: "Bostns"))
         XCTAssertFalse(Prober.isRelatedStandIn("suite", for: "suicide", typo: "suiide"))
+    }
+
+    /// A word autocorrect produces is offered, even if no guess list has it.
+    func testAutocorrectedWordIsNotSuppressed() {
+        struct Autocorrects: SpellOracle {
+            func isAccepted(_ w: String) -> Bool { w == "Mollie" }
+            func guesses(for typo: String) -> [String] { ["Molly"] }
+            func completions(for prefix: String) -> [String] { [] }
+            func correction(for typo: String) -> String? { "Mollie" }
+        }
+        let r = Prober(oracle: Autocorrects(), lexicon: Lexicon(["Mollie"])).probe("Mollie")
+        XCTAssertEqual(r.verdict, .suggested)
+        XCTAssertEqual(r.correctionHit, true)
     }
 
     func testInternalCapitalsAreUntestable() {

@@ -27,7 +27,7 @@ hashsort() {
 
 case "${2:-all}" in
   control-zeros) jq -r 'select(.verdict=="suppressed") | .word' "$DATA/control-en.jsonl" | sort ;;
-  sample)        jq -r 'select(.verdict=="suppressed") | .word' "$DATA/verify-en.jsonl" | hashsort | head -200 | sort ;;
-  base-rate)     jq -r 'select(.verdict=="suggested") | .word' "$DATA/probe-en.jsonl" | hashsort | head -200 | sort ;;
+  sample)        jq -r 'select(.verdict=="suppressed") | .word' "$DATA/verify-en.jsonl" | hashsort | awk "NR <= 200" | sort ;;
+  base-rate)     jq -r 'select(.verdict=="suggested") | .word' "$DATA/probe-en.jsonl" | hashsort | awk "NR <= 200" | sort ;;
   *) echo "usage: $0 <data-dir> control-zeros|sample|base-rate" >&2; exit 2 ;;
 esac

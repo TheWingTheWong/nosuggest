@@ -33,3 +33,12 @@ religion	(papal|devoutest|unholy|mullah.*|mulla|fatwa.*|hajj.*|deific|afreet|afr
 race and ethnicity	(ghetto.*|dusky|ebony|nappy|nappier|nappiest|skinhead.*|nonwhite.*|paleface.*|whitey.*|coolie.*|haole|wahine|octoroon.*|sheeny|greaseball.*|fellah|kowtow|uppity|wampum|clansm[ae]n|pollack|dink)
 drugs and alcohol	(doping|drugging|lush|lushes|detox|downer|freebas.*|wino|winos|souse|soused|khat|jigger|nard)
 profanity and insults	(hags|tramp|tramps|slacker.*|madman|madmen|geezer.*|dweeb.*|guttersnipe.*|knave.*|scuzzy|cussed|cusses|cussing|cootie.*|wally|plonker.*|ponce|pouf.*|proles|dumbo.*|scut|gagm[ae]n|ragman|barbie.*|dickey|mugg.*|shackl.*|outgun)
+# Fourth pass, after the final census. Words with no sensitive reading
+# (mora, extern, maroon, whops, pule...) are deliberately left in "other".
+lookalikes	(titi|bating|testes)
+violence, crime and weapons	(rap(e|es|ed|ing)|raping|torturing|gag|gags|gagged|gagging|gagger|snatcher.*|grisly)
+sex and the body	(rimmed|rimming|urethra|hots|pecker|puds|hooter|woodies|jacking|nutting|coed|douching|hoer|onanist.*|gayest|bared|barer|bares|barest|baring|leman|concha)
+death and medicine	(deader|deadest|leprous|peed|pees|poos)
+drugs and alcohol	(souses)
+profanity and insults	(cuss|viler|wallies|begorra|dike|dikes)
+religion	(cloven|papism|suttees)
