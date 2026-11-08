@@ -13,6 +13,9 @@ USAGE
                                            full battery on a random sample (no early exit)
   nosuggest report [--data <dir>] [--out <dir>]
                                            summarise a census for the web explorer
+  nosuggest concepts [--file data/concepts.tsv]
+                                           same concepts probed across languages, as JSON
+  nosuggest guesses <typo=word>...         raw guesses for typos, as JSON
   nosuggest env                            print OS, checker and user-dictionary details
 
 OPTIONS
@@ -181,6 +184,52 @@ case "control":
     FileHandle.standardError.write(Data("control: full battery on \(sample.count) random words\n".utf8))
     runSharded(words: sample, neighborsPath: opts.flags["neighbors"] ?? lexPath, outPath: opts.flags["out"],
                jobs: opts.int("jobs", 4), extraArgs: ["--full", "1"])
+
+case "guesses":
+    // nosuggest guesses typo=word ... -> JSON with the checker's raw answers.
+    guard !opts.positional.isEmpty else { fail("guesses: give typo=word pairs") }
+    let o = AppleSpellOracle(language: language)
+    var rows: [[String: Any]] = []
+    for pair in opts.positional {
+        let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+        let typo = parts[0]
+        var row: [String: Any] = ["typo": typo, "guesses": o.guesses(for: typo)]
+        if parts.count == 2 {
+            row["word"] = parts[1]
+            row["accepted"] = o.isAccepted(parts[1])
+        }
+        rows.append(row)
+    }
+    let d = try! JSONSerialization.data(withJSONObject: rows, options: [.sortedKeys])
+    print(String(decoding: d, as: UTF8.self))
+
+case "concepts":
+    // One row per concept, one column per language: the same idea probed
+    // with the full battery in every language the file lists.
+    let path = opts.string("file", "data/concepts.tsv")
+    guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { fail("cannot read \(path)") }
+    let lines = text.split(whereSeparator: \.isNewline).map { $0.split(separator: "\t", omittingEmptySubsequences: false).map(String.init) }
+    guard let header = lines.first, header.count > 1 else { fail("concepts: empty file") }
+    var p = policy
+    p.earlyExit = false
+    p.minLength = 3
+    var probers: [String: Prober] = [:]
+    var rows: [[String: Any]] = []
+    for line in lines.dropFirst() where line.count == header.count {
+        var cells: [String: Any] = [:]
+        for (i, lang) in header.enumerated().dropFirst() {
+            let prober = probers[lang] ?? Prober(oracle: AppleSpellOracle(language: lang), lexicon: Lexicon([]), policy: p)
+            probers[lang] = prober
+            let r = prober.probe(line[i])
+            cells[lang] = ["word": line[i], "verdict": r.verdict.rawValue,
+                           "hits": r.trials.filter(\.hit).count, "trials": r.trials.count,
+                           "example": r.trials.first.map { [$0.typo] + $0.guesses } ?? []]
+        }
+        rows.append(["concept": line[0], "cells": cells])
+    }
+    let out: [String: Any] = ["languages": Array(header.dropFirst()), "rows": rows]
+    let d = try! JSONSerialization.data(withJSONObject: out, options: [.sortedKeys])
+    print(String(decoding: d, as: UTF8.self))
 
 case "report":
     Report.run(opts)

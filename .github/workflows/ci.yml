@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: swift --version && sw_vers
+      - name: Build
+        run: swift build -c release
+      - name: Unit and property tests
+        run: swift test
+      - name: Live probe against this runner's spell checker
+        # Not an assertion about Apple's list (it can change with any macOS
+        # update), just a record of what this machine's checker does.
+        run: |
+          .build/release/nosuggest env
+          .build/release/nosuggest word suicide lesbian Hitler Stalin

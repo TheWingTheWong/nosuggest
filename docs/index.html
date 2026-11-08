@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Words your Mac won't suggest</title>
+<meta name="description" content="A black-box census of the words the macOS spell checker accepts as correctly spelled but never offers as a correction.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="page">
+  <header class="intro">
+    <h1>Words your Mac won't suggest</h1>
+    <p class="lede">The macOS spell checker knows how to spell <span class="typo" data-word="suicde">suicde</span>,
+      <span class="typo" data-word="aborion">aborion</span> and <span class="typo" data-word="condm">condm</span>.
+      It accepts the correct spelling of all three. It will not tell you what that spelling is.
+      Click any underlined word to see what your Mac offers instead.</p>
+    <p class="lede" id="headline-stats">Loading the census&hellip;</p>
+  </header>
+
+  <section class="specimens" aria-label="Typo specimens">
+    <p class="specimen-note">Each word below is one keystroke away from a word macOS accepts. The menus are the real answers from <code>NSSpellChecker</code> on <span data-fill="os">macOS</span>. A red underline means the Mac never offers the word you meant; grey means it does.</p>
+    <div class="specimen-grid" id="specimens"></div>
+  </section>
+
+  <section>
+    <h2>Same idea, seven languages</h2>
+    <p>Each language has its own list. The same 25 concepts, translated and run through eight typos each in every language the Mac checks. A red word is accepted but never suggested; a plain one comes back.</p>
+    <div class="table-wrap matrix-wrap">
+      <table class="matrix" id="matrix"></table>
+    </div>
+    <p class="matrix-note" id="matrix-note"></p>
+  </section>
+
+  <section>
+    <h2>The English list</h2>
+    <p>Every word in this list passed the spell check when typed correctly, and came back from none of six to eight one-letter typos. Words where the checker offered a different form of the same word instead (<em>Boston's</em> for <em>Bostns</em>) are not counted. The categories are editorial, assigned by hand-written rules in <a href="https://github.com/TheWingTheWong/nosuggest/blob/main/data/categories.tsv"><code>data/categories.tsv</code></a>.</p>
+    <div class="controls">
+      <label class="search">
+        <span class="visually-hidden">Search the list</span>
+        <input id="q" type="search" placeholder="Search the list" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="toggle"><input type="checkbox" id="show-slurs"> Show slurs</label>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+    <p class="count" id="count" aria-live="polite"></p>
+    <div class="table-wrap">
+      <table class="words">
+        <thead><tr><th scope="col">Word</th><th scope="col">Category</th><th scope="col">One typo, and what macOS offered</th><th scope="col" title="Appears inside a phrase on the iOS keyboard blocklist">iOS</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <button class="more" id="more" type="button">Show more</button>
+  </section>
+
+  <section>
+    <h2>How sure is this?</h2>
+    <p id="method-text">A spell checker misses the right word sometimes for ordinary reasons. To measure how often, the probe ran the full eight-typo battery on a random sample of words and counted how many typos brought each one back.</p>
+    <figure class="chart">
+      <div id="histogram"></div>
+      <figcaption id="hist-caption"></figcaption>
+    </figure>
+    <p id="fp-text"></p>
+  </section>
+
+  <section>
+    <h2>Not the iPhone keyboard list</h2>
+    <p id="ios-text"></p>
+    <p id="hunspell-text"></p>
+  </section>
+
+  <section>
+    <h2>Run it on your Mac</h2>
+    <p>The census is a Swift command-line tool that talks to the same spell checker TextEdit, Mail, Notes and Safari use. It needs Xcode's command-line tools and nothing else.</p>
+    <pre class="cmd"><code>git clone https://github.com/TheWingTheWong/nosuggest
+cd nosuggest
+swift run -c release nosuggest word suicide lesbian
+./scripts/run-census.sh   # about 30 minutes</code></pre>
+    <p>Source, raw data and method: <a href="https://github.com/TheWingTheWong/nosuggest">github.com/TheWingTheWong/nosuggest</a>.</p>
+  </section>
+
+  <footer class="foot">
+    <p>Measured on <span data-fill="os">macOS</span>, language <code>en</code>, <span data-fill="generated"></span>. Word list: SCOWL by Kevin Atkinson. iOS comparison: Derik Kauffman's <a href="https://swipeblocked.com">Swipeblocked</a>.</p>
+  </footer>
+</main>
+
+<div class="menu" id="menu" role="menu" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

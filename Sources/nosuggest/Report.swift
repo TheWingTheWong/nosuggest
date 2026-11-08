@@ -75,7 +75,8 @@ enum Report {
 
     static func category(_ w: String, _ rules: [(String, NSRegularExpression)]) -> String {
         let r = NSRange(location: 0, length: (w as NSString).length)
-        return rules.first { $0.1.firstMatch(in: w, range: r) != nil }?.0 ?? "other"
+        if let hit = rules.first(where: { $0.1.firstMatch(in: w, range: r) != nil }) { return hit.0 }
+        return (w.first?.isUppercase ?? false) ? "names and places" : "other"
     }
 
     /// Every word that occurs in any iOS keyboard blocklist phrase or form.

@@ -1,0 +1,22 @@
+# typo=word pairs shown on the web page. Generated into docs/data by
+# scripts/build-site.sh with the checker's real answers.
+suicde=suicide
+aborion=abortion
+condm=condom
+lesbain=lesbian
+euthanasa=euthanasia
+overdse=overdose
+cocane=cocaine
+alcohl=alcohol
+Hiter=Hitler
+Stlin=Stalin
+murdr=murder
+homicde=homicide
+tampn=tampon
+vagna=vagina
+pensi=penis
+gospl=gospel
+Isalm=Islam
+Chrstian=Christian
+bulet=bullet
+pistl=pistol
