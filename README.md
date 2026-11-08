@@ -174,8 +174,9 @@ accepts). Ordinary words come back from 99.3% (deletions) to 99.8%
 
 ![Control histogram](assets/control.svg)
 
-The histogram is bimodal. 2,174 words came back from all eight typos and 52
-from none, with almost nothing in between. The words in between are odd plurals
+The histogram (lowercase words) is bimodal. 2,174 words came back from all
+eight typos and 52 from none (3 of those offered another form of the word),
+with almost nothing in between. The words in between are odd plurals
 and rare forms (*blockings*, *whitebaits*, *muchnesses*), and none of them
 reaches zero.
 
@@ -185,7 +186,7 @@ labels in [`data/26.5.1/`](data/26.5.1/):
 
 | sample | n | obvious sensitive meaning | spelled like one | no apparent reason |
 |---|---:|---:|---:|---:|
-| every control word judged suppressed | 51 | 46 | 4 (*copulatives*, *daemons*, *fyke*, *niggles*) | 1 (*rabidness*) |
+| every control word judged suppressed (49 lowercase, 2 capitalised) | 51 | 46 | 4 (*copulatives*, *daemons*, *fyke*, *niggles*) | 1 (*rabidness*) |
 | 200 words drawn at random from the list (seed 20261108) | 200 | 184 | 9 (*analeptics*, *rapeseed*, *rectus*, *virginals*, ...) | 7 (3.5%, 95% CI 1.7-7.0%) |
 
 Projected over the list, about 60 words (95% CI 29-120) have no apparent

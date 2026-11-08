@@ -50,8 +50,8 @@ function renderFacts(s) {
     (k.controlRelated ? `, or came back only as another form of the word (${k.controlRelated} of these)` : "") + `.`;
   const z = s.auditControlZeros, a = s.auditSample;
   $("fp-text").innerHTML =
-    `Only ${k.histogram[0]} of ${fmt(k.wordsTested)} random words missed all eight, and they are not random-looking: ` +
-    `${z ? `of the ${z.size} judged suppressed, ${z.topical} have an obvious sensitive meaning, ${z.lookalike} are spelled like one ` +
+    `Only ${k.histogram[0]} of ${fmt(k.wordsTested)} random lowercase words missed all eight (${k.controlRelated} of those came back as another form), and they are not random-looking. ` +
+    `${z ? `Of the ${z.size} control words judged suppressed, lowercase and capitalised, ${z.topical} have an obvious sensitive meaning, ${z.lookalike} are spelled like one ` +
     `(${z.lookalikeWords.map(esc).join(", ")}), and ${z.none} has no apparent reason (${z.noneWords.map(esc).join(", ")}). ` : ""}` +
     (a ? `In a seeded random sample of ${a.size} words from the list, ${a.none} (${pct(a.noneRate)}, 95% interval ${pct(a.noneLow)} to ${pct(a.noneHigh)}) ` +
       `have no apparent reason: ${a.noneWords.map(esc).join(", ")}. Projected over the list, that is about ${Math.round(a.noneRate * c.suppressed)} words. ` +
